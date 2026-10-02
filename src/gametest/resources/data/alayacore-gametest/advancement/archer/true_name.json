@@ -1,0 +1,19 @@
+{
+	"parent": "alayacore-gametest:archer/win_raid",
+	"criteria": {
+		"granted": {
+			"trigger": "minecraft:impossible"
+		}
+	},
+	"display": {
+		"icon": {
+			"id": "minecraft:bow"
+		},
+		"title": "Test",
+		"description": "Test",
+		"frame": "challenge",
+		"hidden": false,
+		"show_toast": false,
+		"announce_to_chat": false
+	}
+}

@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "${mod_id}",
+	"version": "${version}",
+	"name": "Alaya Core",
+	"description": "Library for servants: abilities, mana, ranks, clashes, shields and progression.",
+	"authors": [
+		"CWZMorro"
+	],
+	"license": "MIT",
+	"icon": "assets/alayacore/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.cwzmorro.alayacore.AlayaCore"
+		],
+		"client": [
+			"io.github.cwzmorro.alayacore.client.AlayaCoreClient"
+		]
+	},
+	"mixins": [
+		"alayacore.mixins.json",
+		{
+			"config": "alayacore.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=${java_version}",
+		"fabric-api": "*"
+	}
+}

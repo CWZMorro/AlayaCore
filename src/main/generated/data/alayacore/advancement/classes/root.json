@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "background": "minecraft:block/chiseled_quartz_block_top",
+    "description": {
+      "translate": "advancements.alayacore.classes.description"
+    },
+    "icon": {
+      "id": "alayacore:all"
+    },
+    "show_toast": false,
+    "title": {
+      "translate": "advancements.alayacore.classes.title"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

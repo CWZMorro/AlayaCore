@@ -1,0 +1,42 @@
+{
+  "parent": "alayacore:classes/root",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.black.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.berserker"
+        }
+      ]
+    },
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "berserker/black"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.black.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.berserker"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

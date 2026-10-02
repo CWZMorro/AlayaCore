@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "background": "minecraft:gui/advancements/backgrounds/end",
+    "description": {
+      "translate": "advancements.alayacore.throne_of_heroes.description"
+    },
+    "icon": {
+      "id": "alayacore:alaya"
+    },
+    "show_toast": false,
+    "title": {
+      "translate": "advancements.alayacore.throne_of_heroes.title"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

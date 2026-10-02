@@ -1,0 +1,32 @@
+{
+	"schemaVersion": 1,
+	"id": "alayacore-gametest",
+	"version": "1.0.0",
+	"name": "Alaya Core game tests",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.cwzmorro.alayacore.gametest.TestServants"
+		],
+		"client": [
+			"io.github.cwzmorro.alayacore.gametest.TestShieldsClient"
+		],
+		"fabric-gametest": [
+			"io.github.cwzmorro.alayacore.gametest.ManaGameTests",
+			"io.github.cwzmorro.alayacore.gametest.ServantGameTests",
+			"io.github.cwzmorro.alayacore.gametest.ProgressionGameTests",
+			"io.github.cwzmorro.alayacore.gametest.AbilityGameTests",
+			"io.github.cwzmorro.alayacore.gametest.PresetGameTests",
+			"io.github.cwzmorro.alayacore.gametest.DivinityGameTests",
+			"io.github.cwzmorro.alayacore.gametest.ShieldGameTests"
+		],
+		"fabric-client-gametest": [
+			"io.github.cwzmorro.alayacore.gametest.ServantScreenClientTest",
+			"io.github.cwzmorro.alayacore.gametest.ServantHudClientTest",
+			"io.github.cwzmorro.alayacore.gametest.AbilityClientTest"
+		]
+	},
+	"depends": {
+		"alayacore": "*"
+	}
+}

@@ -1,0 +1,42 @@
+{
+  "parent": "alayacore:classes/lancer/bronze",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.silver.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.lancer"
+        }
+      ]
+    },
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "lancer/silver"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.silver.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.lancer"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

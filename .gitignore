@@ -1,0 +1,27 @@
+# Gradle and build output
+.gradle/
+build/
+out/
+bin/
+run/
+logs/
+*.log
+src/main/generated/.cache/
+
+# Source art and texture tools (the generated textures in src/ are what the mod uses)
+art/
+
+# Editors and IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# Tools and OS files
+.claude/
+.DS_Store
+Thumbs.db

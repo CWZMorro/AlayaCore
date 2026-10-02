@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "alayacore-datagen",
+	"version": "1.0.0",
+	"name": "Alaya Core data generation",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-datagen": [
+			"io.github.cwzmorro.alayacore.datagen.AlayaDataGenerator"
+		]
+	},
+	"depends": {
+		"alayacore": "*"
+	}
+}

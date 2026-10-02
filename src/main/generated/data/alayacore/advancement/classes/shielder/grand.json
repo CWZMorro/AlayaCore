@@ -1,0 +1,44 @@
+{
+  "parent": "alayacore:classes/shielder/gold",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.grand.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.shielder"
+        }
+      ]
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "shielder/grand"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.grand.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.shielder"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,43 @@
+{
+  "parent": "alayacore:classes/caster/silver",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.gold.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.caster"
+        }
+      ]
+    },
+    "frame": "challenge",
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "caster/gold"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.gold.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.caster"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

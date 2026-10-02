@@ -1,0 +1,44 @@
+{
+  "parent": "alayacore:classes/caster/gold",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.grand.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.caster"
+        }
+      ]
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "caster/grand"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.grand.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.caster"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
