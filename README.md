@@ -40,10 +40,17 @@ Please follow these guidelines:
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
+## Contact
+
+To contact me: [cwzmorro@gmail.com](mailto:cwzmorro@gmail.com)
+
 ## Credits
 
-An unofficial fan work. Not affiliated with TYPE-MOON, Aniplex, Lasengle or Mojang.
+- An unofficial fan work. Not affiliated with TYPE-MOON, Aniplex, Lasengle or Mojang.
+- Many images, such as the class icons, are official Fate media taken from the [TYPE-MOON Wiki](https://typemoon.fandom.com).
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+The Fate media (the class icons) belong to TYPE-MOON and are not covered by the MIT License.
