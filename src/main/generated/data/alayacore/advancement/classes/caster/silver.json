@@ -1,0 +1,42 @@
+{
+  "parent": "alayacore:classes/caster/bronze",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.silver.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.caster"
+        }
+      ]
+    },
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "caster/silver"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.silver.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.caster"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

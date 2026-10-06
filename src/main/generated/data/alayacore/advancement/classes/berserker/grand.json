@@ -1,0 +1,44 @@
+{
+  "parent": "alayacore:classes/berserker/gold",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.grand.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.berserker"
+        }
+      ]
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "berserker/grand"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.grand.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.berserker"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

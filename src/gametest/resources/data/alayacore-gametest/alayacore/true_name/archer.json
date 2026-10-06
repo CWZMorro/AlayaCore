@@ -1,0 +1,14 @@
+{
+	"branch": "alayacore-gametest:archer/root",
+	"deeds": [
+		{
+			"advancement": "alayacore-gametest:archer/kill_zombie",
+			"kill": "minecraft:zombie"
+		},
+		{
+			"advancement": "alayacore-gametest:archer/win_raid",
+			"win_raid": true
+		}
+	],
+	"awakening": "alayacore-gametest:archer/true_name"
+}

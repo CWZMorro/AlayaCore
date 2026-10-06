@@ -1,0 +1,323 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/saber/black"
+        },
+        "when": "saber/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/saber/bronze"
+        },
+        "when": "saber/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/saber/silver"
+        },
+        "when": "saber/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/saber/gold"
+        },
+        "when": "saber/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/saber/grand"
+        },
+        "when": "saber/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/archer/black"
+        },
+        "when": "archer/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/archer/bronze"
+        },
+        "when": "archer/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/archer/silver"
+        },
+        "when": "archer/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/archer/gold"
+        },
+        "when": "archer/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/archer/grand"
+        },
+        "when": "archer/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/lancer/black"
+        },
+        "when": "lancer/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/lancer/bronze"
+        },
+        "when": "lancer/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/lancer/silver"
+        },
+        "when": "lancer/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/lancer/gold"
+        },
+        "when": "lancer/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/lancer/grand"
+        },
+        "when": "lancer/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/rider/black"
+        },
+        "when": "rider/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/rider/bronze"
+        },
+        "when": "rider/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/rider/silver"
+        },
+        "when": "rider/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/rider/gold"
+        },
+        "when": "rider/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/rider/grand"
+        },
+        "when": "rider/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/caster/black"
+        },
+        "when": "caster/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/caster/bronze"
+        },
+        "when": "caster/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/caster/silver"
+        },
+        "when": "caster/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/caster/gold"
+        },
+        "when": "caster/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/caster/grand"
+        },
+        "when": "caster/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/assassin/black"
+        },
+        "when": "assassin/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/assassin/bronze"
+        },
+        "when": "assassin/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/assassin/silver"
+        },
+        "when": "assassin/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/assassin/gold"
+        },
+        "when": "assassin/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/assassin/grand"
+        },
+        "when": "assassin/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/berserker/black"
+        },
+        "when": "berserker/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/berserker/bronze"
+        },
+        "when": "berserker/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/berserker/silver"
+        },
+        "when": "berserker/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/berserker/gold"
+        },
+        "when": "berserker/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/berserker/grand"
+        },
+        "when": "berserker/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/ruler/black"
+        },
+        "when": "ruler/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/ruler/bronze"
+        },
+        "when": "ruler/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/ruler/silver"
+        },
+        "when": "ruler/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/ruler/gold"
+        },
+        "when": "ruler/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/ruler/grand"
+        },
+        "when": "ruler/grand"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/shielder/black"
+        },
+        "when": "shielder/black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/shielder/bronze"
+        },
+        "when": "shielder/bronze"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/shielder/silver"
+        },
+        "when": "shielder/silver"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/shielder/gold"
+        },
+        "when": "shielder/gold"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "alayacore:item/class_badge/shielder/grand"
+        },
+        "when": "shielder/grand"
+      }
+    ],
+    "property": "minecraft:custom_model_data"
+  }
+}

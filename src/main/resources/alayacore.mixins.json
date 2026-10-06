@@ -1,0 +1,22 @@
+{
+	"required": true,
+	"package": "io.github.cwzmorro.alayacore.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"AbilityTickMixin",
+		"CakeBlockMixin",
+		"FoodPropertiesMixin",
+		"PlayerAdvancementsMixin",
+		"ProjectileInvoker",
+		"RaidWinTriggerMixin",
+		"ServantProtectionMixin",
+		"ServerExplosionMixin",
+		"ServerLevelMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

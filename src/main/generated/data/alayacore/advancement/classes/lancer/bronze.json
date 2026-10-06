@@ -1,0 +1,42 @@
+{
+  "parent": "alayacore:classes/lancer/black",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.alayacore.grade.bronze.description",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.lancer"
+        }
+      ]
+    },
+    "icon": {
+      "components": {
+        "minecraft:custom_model_data": {
+          "strings": [
+            "lancer/bronze"
+          ]
+        }
+      },
+      "id": "alayacore:class_badge"
+    },
+    "title": {
+      "translate": "advancements.alayacore.grade.bronze.title",
+      "with": [
+        {
+          "translate": "servant_class.alayacore.lancer"
+        }
+      ]
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
