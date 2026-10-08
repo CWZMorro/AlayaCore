@@ -7,15 +7,15 @@ import io.github.cwzmorro.alayacore.rank.RankRules;
 import io.github.cwzmorro.alayacore.util.Percent;
 
 /** The {@code [clash]} section of {@code config/alayacore.toml}. */
-public record ClashConfig(double closeLowerDrainMultiplier, double loserHitPercent) {
+public record ClashConfig(double closeLowerDrainMultiplier, double winnerContinuationPercent) {
 	public static final ClashConfig DEFAULTS = new ClashConfig(1.5, 90.0);
 
 	public static ClashConfig read(ConfigSection s) {
 		return new ClashConfig(
 			s.number("close_lower_drain_multiplier", " In a clash one letter apart, the lower rank pays this × its own attack's drain.",
 				DEFAULTS.closeLowerDrainMultiplier, 1.0, Double.MAX_VALUE),
-			s.number("loser_hit_percent", " Part of the winning attack's damage the loser of a clash takes.",
-				DEFAULTS.loserHitPercent, 0.0, Percent.WHOLE)
+			s.number("winner_continuation_percent", " Damage percent of the winning beam as it continues along its own path after a clash.",
+				DEFAULTS.winnerContinuationPercent, 0.0, Percent.WHOLE)
 		);
 	}
 
@@ -27,7 +27,7 @@ public record ClashConfig(double closeLowerDrainMultiplier, double loserHitPerce
 		return closeAndLower ? ownDrainPerSecond * this.closeLowerDrainMultiplier : ownDrainPerSecond;
 	}
 
-	public double loserDamage(double damage) {
-		return damage * Percent.toFraction(this.loserHitPercent);
+	public double winnerContinuationDamage(double damage) {
+		return damage * Percent.toFraction(this.winnerContinuationPercent);
 	}
 }

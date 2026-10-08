@@ -25,6 +25,14 @@ public final class ServantClass {
 	}
 
 	/**
+	 * Returns {@code <namespace>:textures/gui/servant_select/icon/<path>.png} for the selection screen.
+	 * The texture must contain side-by-side square copies at 16, 32, 48 and 64 pixels.
+	 */
+	public static Identifier icon(Identifier id) {
+		return id.withPath(path -> "textures/gui/servant_select/icon/" + path + ".png");
+	}
+
+	/**
 	 * Returns {@code <namespace>:textures/gui/servant_class/<path>/<grade>.png} for the HUD.
 	 * The texture must contain side-by-side square copies at 38, 76, 114 and 152 pixels.
 	 */

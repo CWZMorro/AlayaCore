@@ -8,7 +8,6 @@ import java.util.Optional;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 
 /** Changing a player's presets on the server. Every request from a client is checked first. */
@@ -39,7 +38,7 @@ public final class Presets {
 
 	public static void setSlot(ServerPlayer player, int preset, int slot, Optional<Identifier> ability) {
 		if (AbilityPresets.isValid(preset, slot)
-			&& ability.map(id -> Abilities.owned(player).contains(ResourceKey.create(AlayaRegistries.ABILITY_KEY, id))).orElse(true)) {
+			&& ability.map(id -> Abilities.owns(player, id)).orElse(true)) {
 			player.setAttached(AbilityStorage.PRESETS, get(player).with(preset, slot, ability));
 		}
 	}

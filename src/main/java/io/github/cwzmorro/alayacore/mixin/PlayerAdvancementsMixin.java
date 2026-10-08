@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.mixin;
 
 import io.github.cwzmorro.alayacore.mana.ManaEvents;
 import io.github.cwzmorro.alayacore.progression.ClassGrades;
+import io.github.cwzmorro.alayacore.progression.TrueName;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,12 +25,14 @@ abstract class PlayerAdvancementsMixin {
 	private void alayacore$onCompleted(AdvancementHolder holder, String criterion, CallbackInfoReturnable<Boolean> cir) {
 		ManaEvents.onAdvancementDone(this.player, holder);
 		ClassGrades.onAdvancementChanged(this.player, holder.id());
+		TrueName.onAdvancementChanged(this.player, holder.id());
 	}
 
 	@Inject(method = "revoke", at = @At("RETURN"))
 	private void alayacore$onRevoked(AdvancementHolder holder, String criterion, CallbackInfoReturnable<Boolean> cir) {
 		if (cir.getReturnValueZ()) {
 			ClassGrades.onAdvancementChanged(this.player, holder.id());
+			TrueName.onAdvancementChanged(this.player, holder.id());
 		}
 	}
 }

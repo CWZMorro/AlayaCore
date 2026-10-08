@@ -22,6 +22,12 @@ class RankTest {
 	}
 
 	@Test
+	void rangeJoinsWithAnEnDash() {
+		assertEquals("E–A++", Rank.range(Rank.parse("E"), Rank.parse("A++")));
+		assertEquals("B–A", Rank.range(Rank.parse("B"), Rank.parse("A")));
+	}
+
+	@Test
 	void parseRejectsBadText() {
 		assertThrows(IllegalArgumentException.class, () -> Rank.parse("A+++"));
 		assertThrows(IllegalArgumentException.class, () -> Rank.parse("F"));
@@ -52,7 +58,5 @@ class RankTest {
 		assertFalse(RankRules.overwhelms(Rank.parse("B"), Rank.parse("EX")));
 		assertFalse(RankRules.overwhelms(Rank.parse("EX"), Rank.parse("A")));
 		assertFalse(RankRules.overwhelms(Rank.parse("A++"), Rank.parse("A")));
-		assertFalse(RankRules.overwhelms(Rank.parse("EX++"), Rank.parse("C"), true));
-		assertTrue(RankRules.overwhelms(Rank.parse("EX++"), Rank.parse("C"), false));
 	}
 }

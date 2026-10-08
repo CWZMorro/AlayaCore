@@ -72,6 +72,10 @@ public final class Progression {
 		return AlayaConfig.progression().sync(mana == null ? 0.0 : mana.max());
 	}
 
+	public static ClassGrade grade(LivingEntity entity) {
+		return AlayaConfig.progression().grade(sync(entity), entity instanceof ServerPlayer player && TrueName.isRealized(player));
+	}
+
 	public static ServantStats stats(ServerPlayer player, ServantClassConfig servantClass) {
 		ProgressionConfig config = AlayaConfig.progression();
 		double fill = config.barFill(sync(player), TrueName.isRealized(player));

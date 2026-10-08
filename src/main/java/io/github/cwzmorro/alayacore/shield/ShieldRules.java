@@ -13,12 +13,12 @@ public final class ShieldRules {
 	}
 
 	/**
-	 * Returns remaining HP, or zero when the attack overwhelms the shield's rank; an absolute defence is never overwhelmed.
+	 * Returns remaining HP, or zero when the attack overwhelms the shield's rank.
 	 *
 	 * @param attack the attack's rank, or null for an attack without one (melee, arrows), which only deals damage
 	 */
-	public static double hpAfterHit(@Nullable Rank attack, Rank shield, boolean absoluteDefence, double hp, double damage) {
-		if (attack != null && RankRules.overwhelms(attack, shield, absoluteDefence)) {
+	public static double hpAfterHit(@Nullable Rank attack, Rank shield, double hp, double damage) {
+		if (attack != null && RankRules.overwhelms(attack, shield)) {
 			return 0.0;
 		}
 		return Math.max(0.0, hp - damage);

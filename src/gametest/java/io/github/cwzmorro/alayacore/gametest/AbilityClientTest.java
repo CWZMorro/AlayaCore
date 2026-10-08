@@ -1,5 +1,11 @@
 package io.github.cwzmorro.alayacore.gametest;
 
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.FIRST_ROW_X;
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.FIRST_ROW_Y;
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.FIRST_SLOT_X;
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.FIRST_SLOT_Y;
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.clickPanel;
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.moveToPanel;
 import static io.github.cwzmorro.alayacore.gametest.TestAbilities.event;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.ROUND_TRIP_TICKS;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
@@ -25,12 +31,6 @@ import net.minecraft.resources.Identifier;
 public class AbilityClientTest implements FabricClientGameTest {
 	private static final Identifier RECORDER = TestAbilities.RECORDER.identifier();
 	// Coordinates are relative to the preset panel's corner.
-	private static final int PANEL_WIDTH = 276;
-	private static final int PANEL_HEIGHT = 196;
-	private static final int FIRST_ROW_X = 60;
-	private static final int FIRST_ROW_Y = 38;
-	private static final int FIRST_SLOT_X = 220;
-	private static final int FIRST_SLOT_Y = 55;
 	private static final int SECOND_QUICK_CAST_X = 118;
 	private static final int SECOND_QUICK_CAST_Y = 157;
 	private static final int PRESET_BUTTON_X = 166;
@@ -48,21 +48,21 @@ public class AbilityClientTest implements FabricClientGameTest {
 			context.getInput().pressKey(InputConstants.KEY_B);
 			context.waitForScreen(PresetScreen.class);
 			context.takeScreenshot("presets-01-screen");
-			click(context, FIRST_ROW_X, FIRST_ROW_Y);
-			click(context, FIRST_SLOT_X, FIRST_SLOT_Y);
+			clickPanel(context, FIRST_ROW_X, FIRST_ROW_Y);
+			clickPanel(context, FIRST_SLOT_X, FIRST_SLOT_Y);
 			context.waitTicks(ROUND_TRIP_TICKS);
 			check(slot(world, 0).isPresent(), "Recorder not placed in slot Z");
-			moveTo(context, FIRST_SLOT_X, FIRST_SLOT_Y);
+			moveToPanel(context, FIRST_SLOT_X, FIRST_SLOT_Y);
 			context.getInput().scroll(-1);
 			context.waitTicks(ROUND_TRIP_TICKS);
 			check(slot(world, 0).orElseThrow().mode() == 1, "scroll did not change the mode: " + slot(world, 0));
 			context.takeScreenshot("presets-02-filled");
-			click(context, PRESET_BUTTON_X + PRESET_BUTTON_SPACING, PRESET_BUTTON_Y);
+			clickPanel(context, PRESET_BUTTON_X + PRESET_BUTTON_SPACING, PRESET_BUTTON_Y);
 			context.waitTicks(ROUND_TRIP_TICKS);
 			check(active(world) == 1, "preset button 2 did not select preset 2");
-			click(context, PRESET_BUTTON_X, PRESET_BUTTON_Y);
+			clickPanel(context, PRESET_BUTTON_X, PRESET_BUTTON_Y);
 			context.waitTicks(ROUND_TRIP_TICKS);
-			click(context, SECOND_QUICK_CAST_X, SECOND_QUICK_CAST_Y);
+			clickPanel(context, SECOND_QUICK_CAST_X, SECOND_QUICK_CAST_Y);
 			context.getInput().pressKey(InputConstants.KEY_V);
 			context.waitTick();
 			check(context.computeOnClient(client -> AbilityKeys.quickCastKey(RECORDER, 1).orElseThrow().getTranslatedKeyMessage().getString())
@@ -111,24 +111,6 @@ public class AbilityClientTest implements FabricClientGameTest {
 			context.waitTicks(ROUND_TRIP_TICKS);
 			check(events(world).getLast().equals(event(TestAbilities.RECORDER, "end")), "quick-cast V did not cast: " + events(world));
 		}
-	}
-
-	private static double[] windowPos(ClientGameTestContext context, int x, int y) {
-		return context.computeOnClient(client -> {
-			int scale = client.getWindow().getGuiScale();
-			return new double[]{((client.screen.width - PANEL_WIDTH) / 2 + x) * scale, ((client.screen.height - PANEL_HEIGHT) / 2 + y) * scale};
-		});
-	}
-
-	private static void moveTo(ClientGameTestContext context, int x, int y) {
-		double[] pos = windowPos(context, x, y);
-		context.getInput().setCursorPos(pos[0], pos[1]);
-	}
-
-	private static void click(ClientGameTestContext context, int x, int y) {
-		moveTo(context, x, y);
-		context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
-		context.waitTick();
 	}
 
 	private static AbilityPresets presets(TestSingleplayerContext world) {

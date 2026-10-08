@@ -5,15 +5,20 @@ import io.github.cwzmorro.alayacore.api.AlayaServants;
 import java.util.Optional;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
 import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementType;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStackTemplate;
 
 /**
  * Tracks true-name deeds and awakening through advancements in the shared "Throne of Heroes" tab.
@@ -25,7 +30,17 @@ public final class TrueName {
 	public static final TagKey<EntityType<?>> BOSSES = TagKey.create(Registries.ENTITY_TYPE, AlayaCore.id("true_name_bosses"));
 	public static final Identifier THRONE_OF_HEROES = AlayaCore.id("throne_of_heroes");
 
+	private static final Identifier BACKGROUND = Identifier.withDefaultNamespace("gui/advancements/backgrounds/end");
+
 	private TrueName() {
+	}
+
+	public static AdvancementHolder root(ItemStackTemplate icon) {
+		return GrantedAdvancements.impossible(Advancement.Builder.advancement()
+			.display(icon, Component.translatable("advancements.alayacore.throne_of_heroes.title"),
+				Component.translatable("advancements.alayacore.throne_of_heroes.description"), BACKGROUND, AdvancementType.TASK,
+				false, false, false))
+			.build(THRONE_OF_HEROES);
 	}
 
 	public static void register() {
@@ -46,17 +61,25 @@ public final class TrueName {
 		return deeds(player).map(deeds -> GrantedAdvancements.isDone(player, deeds.awakening())).orElse(false);
 	}
 
+	public static boolean allows(ServerPlayer player) {
+		return player.hasInfiniteMaterials() || isRealized(player);
+	}
+
 	public static void realize(ServerPlayer player) {
 		deeds(player).ifPresent(deeds -> {
 			deeds.deeds().forEach(deed -> GrantedAdvancements.grant(player, deed.advancement()));
 			GrantedAdvancements.grant(player, deeds.awakening());
 		});
-		Progression.refresh(player);
 	}
 
 	public static void unrealize(ServerPlayer player) {
 		deeds(player).ifPresent(deeds -> GrantedAdvancements.revoke(player, deeds.awakening()));
-		Progression.refresh(player);
+	}
+
+	public static void onAdvancementChanged(ServerPlayer player, Identifier advancement) {
+		if (deeds(player).filter(deeds -> deeds.awakening().equals(advancement)).isPresent()) {
+			Progression.refresh(player);
+		}
 	}
 
 	public static void onRaidWon(ServerPlayer player) {
@@ -77,7 +100,6 @@ public final class TrueName {
 			.ifPresent(deed -> GrantedAdvancements.grant(player, deed.advancement()));
 		if (killed.is(BOSSES) && !GrantedAdvancements.isDone(player, deeds.awakening()) && nextDeed(player, deeds).isEmpty()) {
 			GrantedAdvancements.grant(player, deeds.awakening());
-			Progression.refresh(player);
 		}
 	}
 

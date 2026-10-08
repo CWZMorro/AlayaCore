@@ -11,21 +11,16 @@ class ShieldRulesTest {
 
 	@Test
 	void farAboveBreaksItAtOnce() {
-		assertEquals(0.0, ShieldRules.hpAfterHit(Rank.parse("EX"), Rank.parse("B"), false, 306, 1), EPS);
-	}
-
-	@Test
-	void absoluteDefenceIsNeverBrokenAtOnce() {
-		assertEquals(305.0, ShieldRules.hpAfterHit(Rank.parse("EX++"), Rank.parse("C"), true, 306, 1), EPS);
+		assertEquals(0.0, ShieldRules.hpAfterHit(Rank.parse("EX"), Rank.parse("B"), 306, 1), EPS);
 	}
 
 	@Test
 	void everyOtherAttackTakesHp() {
-		assertEquals(425.0, ShieldRules.hpAfterHit(Rank.parse("EX"), A, false, 525, 100), EPS);
-		assertEquals(425.0, ShieldRules.hpAfterHit(Rank.parse("A++"), A, false, 525, 100), EPS);
-		assertEquals(425.0, ShieldRules.hpAfterHit(Rank.parse("C"), A, false, 525, 100), EPS);
-		assertEquals(425.0, ShieldRules.hpAfterHit(null, A, false, 525, 100), EPS);
-		assertEquals(0.0, ShieldRules.hpAfterHit(null, A, false, 50, 100), EPS);
+		assertEquals(425.0, ShieldRules.hpAfterHit(Rank.parse("EX"), A, 525, 100), EPS);
+		assertEquals(425.0, ShieldRules.hpAfterHit(Rank.parse("A++"), A, 525, 100), EPS);
+		assertEquals(425.0, ShieldRules.hpAfterHit(Rank.parse("C"), A, 525, 100), EPS);
+		assertEquals(425.0, ShieldRules.hpAfterHit(null, A, 525, 100), EPS);
+		assertEquals(0.0, ShieldRules.hpAfterHit(null, A, 50, 100), EPS);
 	}
 
 	@Test

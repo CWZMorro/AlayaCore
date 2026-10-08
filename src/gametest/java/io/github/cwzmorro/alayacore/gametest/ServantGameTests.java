@@ -1,5 +1,6 @@
 package io.github.cwzmorro.alayacore.gametest;
 
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.cancel;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.classConfig;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.human;
@@ -13,13 +14,14 @@ import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
-import io.github.cwzmorro.alayacore.network.ChooseServantPayload;
+import io.github.cwzmorro.alayacore.network.OpenServantSelectionPayload;
 import io.github.cwzmorro.alayacore.servant.ServantChoice;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantSelection;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -54,6 +56,21 @@ public class ServantGameTests {
 
 	private static double speed(ServerPlayer player) {
 		return player.getAttributeValue(Attributes.MOVEMENT_SPEED);
+	}
+
+	@GameTest
+	public void selectionStatsSurviveTheNetwork(GameTestHelper helper) {
+		OpenServantSelectionPayload options = new OpenServantSelectionPayload(false, false, true, AlayaConfig.progression().demi(),
+			ServantSelection.realStats());
+		ByteBuf buffer = Unpooled.buffer();
+		try {
+			OpenServantSelectionPayload.STREAM_CODEC.encode(buffer, options);
+			check(helper, "selection options after network round trip", options, OpenServantSelectionPayload.STREAM_CODEC.decode(buffer));
+			check(helper, "all payload bytes consumed", false, buffer.isReadable());
+		} finally {
+			buffer.release();
+		}
+		helper.succeed();
 	}
 
 	@GameTest
@@ -173,15 +190,15 @@ public class ServantGameTests {
 	}
 
 	@GameTest
-	public void closingTheReopenedBookChangesNothing(GameTestHelper helper) {
+	public void closingTheReopenedScreenChangesNothing(GameTestHelper helper) {
 		ServerPlayer player = joinAs(helper, TestServants.OLD);
 		ServantSelection.open(player);
-		ServantSelection.choose(player, new ChooseServantPayload(ChooseServantPayload.Kind.CANCEL, Optional.empty()));
+		ServantSelection.choose(player, cancel());
 		check(helper, "choice", ServantChoice.servant(TestServants.OLD), choice(player));
 		check(helper, "choosing after closing", false, choosing(player));
 
 		ServerPlayer newcomer = join(helper);
-		ServantSelection.choose(newcomer, new ChooseServantPayload(ChooseServantPayload.Kind.CANCEL, Optional.empty()));
+		ServantSelection.choose(newcomer, cancel());
 		check(helper, "first-join screen can't be closed", true, choosing(newcomer));
 		helper.succeed();
 	}

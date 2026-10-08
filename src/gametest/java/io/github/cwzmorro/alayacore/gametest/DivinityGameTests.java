@@ -1,5 +1,6 @@
 package io.github.cwzmorro.alayacore.gametest;
 
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.INSIDE;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.human;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.join;
@@ -10,13 +11,11 @@ import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.divinity.Divinity;
 import io.github.cwzmorro.alayacore.servant.ServantSelection;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
-import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 
 public class DivinityGameTests {
-	private static final BlockPos INSIDE = new BlockPos(1, 1, 1);
 	// From the test mod's data file data/minecraft/alayacore/divinity/zombie.json.
 	private static final double ZOMBIE_DIVINITY = 3.0;
 	private static final double MID_SYNC = 0.6;

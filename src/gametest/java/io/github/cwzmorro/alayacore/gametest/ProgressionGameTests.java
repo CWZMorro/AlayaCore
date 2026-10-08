@@ -1,10 +1,16 @@
 package io.github.cwzmorro.alayacore.gametest;
 
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.BESIDE;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.INSIDE;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.advancement;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.award;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.classConfig;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.done;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.human;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.join;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAs;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.revoke;
 
 import io.github.cwzmorro.alayacore.AlayaItems;
 import io.github.cwzmorro.alayacore.api.AlayaMana;
@@ -22,9 +28,7 @@ import io.github.cwzmorro.alayacore.servant.ServantStats;
 import io.github.cwzmorro.alayacore.util.Percent;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
-import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
@@ -41,19 +45,17 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameType;
 
 public class ProgressionGameTests {
-	private static final BlockPos INSIDE = new BlockPos(1, 1, 1);
-	private static final BlockPos BESIDE = new BlockPos(3, 1, 1);
+	// The test Archer's and Legend's advancements (the test mod's data files).
+	private static final Identifier ARCHER_BRANCH = TestServants.id("archer/root");
+	private static final Identifier ARCHER_KILL_DEED = TestServants.id("archer/kill_zombie");
+	private static final Identifier ARCHER_RAID_DEED = TestServants.id("archer/win_raid");
+	private static final Identifier ARCHER_TRUE_NAME = TestServants.id("archer/true_name");
 	private static final int PROMOTIONS = 4;
 	private static final int DEMOTIONS = 5;
 	private static final int PROTECTION_LEVEL = 4;
 	private static final float HIT = 10.0F;
 	// Vanilla: each point of Protection blocks 1/25 (4%) of the damage.
 	private static final double PROTECTION_POINTS_FOR_ALL = 25.0;
-
-	private static boolean done(GameTestHelper helper, ServerPlayer player, String path) {
-		AdvancementHolder holder = helper.getLevel().getServer().getAdvancements().get(Identifier.parse(path));
-		return holder != null && player.getAdvancements().getOrStartProgress(holder).isDone();
-	}
 
 	private static void kill(GameTestHelper helper, ServerPlayer killer, LivingEntity victim) {
 		victim.hurtServer(helper.getLevel(), helper.getLevel().damageSources().playerAttack(killer), Float.MAX_VALUE);
@@ -93,21 +95,21 @@ public class ProgressionGameTests {
 	@GameTest
 	public void deedsThenABossRealizeTheTrueName(GameTestHelper helper) {
 		ServerPlayer player = joinAs(helper, TestServants.ARCHER);
-		check(helper, "throne of heroes", true, done(helper, player, TrueName.THRONE_OF_HEROES.toString()));
-		check(helper, "branch", true, done(helper, player, "alayacore-gametest:archer/root"));
+		check(helper, "throne of heroes", true, done(helper, player, TrueName.THRONE_OF_HEROES));
+		check(helper, "branch", true, done(helper, player, ARCHER_BRANCH));
 
 		kill(helper, player, helper.spawn(EntityType.WITHER, BESIDE));
-		check(helper, "boss before the deeds does nothing", false, done(helper, player, "alayacore-gametest:archer/true_name"));
+		check(helper, "boss before the deeds does nothing", false, done(helper, player, ARCHER_TRUE_NAME));
 
 		CriteriaTriggers.RAID_WIN.trigger(player);
-		check(helper, "raid deed before the kill deed", false, done(helper, player, "alayacore-gametest:archer/win_raid"));
+		check(helper, "raid deed before the kill deed", false, done(helper, player, ARCHER_RAID_DEED));
 		kill(helper, player, helper.spawn(EntityType.ZOMBIE, INSIDE));
-		check(helper, "kill deed", true, done(helper, player, "alayacore-gametest:archer/kill_zombie"));
+		check(helper, "kill deed", true, done(helper, player, ARCHER_KILL_DEED));
 		CriteriaTriggers.RAID_WIN.trigger(player);
-		check(helper, "raid deed", true, done(helper, player, "alayacore-gametest:archer/win_raid"));
+		check(helper, "raid deed", true, done(helper, player, ARCHER_RAID_DEED));
 
 		kill(helper, player, helper.spawn(EntityType.WITHER, BESIDE));
-		check(helper, "true name", true, done(helper, player, "alayacore-gametest:archer/true_name"));
+		check(helper, "true name", true, done(helper, player, ARCHER_TRUE_NAME));
 		// The kills above raised max mana too, so sync is not 0.
 		ProgressionConfig config = AlayaConfig.progression();
 		check(helper, "max HP with the true name share", ServantStats.between(config.demi(), classConfig(ServantClasses.ARCHER).real(),
@@ -158,13 +160,13 @@ public class ProgressionGameTests {
 		// The test world is kept between runs: start from no titles.
 		helper.getLevel().getServer().globalAttachments().setAttached(Grand.DATA, GrandData.EMPTY);
 		ServerPlayer player = joinAs(helper, TestServants.ARCHER);
-		check(helper, "Classes tab", true, done(helper, player, ClassGrades.ROOT.toString()));
+		check(helper, "Classes tab", true, done(helper, player, ClassGrades.ROOT));
 		checkGrade(helper, player, ClassGrade.BLACK);
 
 		ProgressionConfig config = AlayaConfig.progression();
-		AlayaMana.update(player, m -> m.withMax(AlayaConfig.progression().manaForSync(Percent.toFraction(config.bronzeSyncPercent()))));
+		AlayaMana.update(player, m -> m.withMax(config.manaForSync(Percent.toFraction(config.bronzeSyncPercent()))));
 		checkGrade(helper, player, ClassGrade.BRONZE);
-		AlayaMana.update(player, m -> m.withMax(AlayaConfig.progression().manaForSync(Percent.toFraction(config.silverSyncPercent()))));
+		AlayaMana.update(player, m -> m.withMax(config.manaForSync(Percent.toFraction(config.silverSyncPercent()))));
 		checkGrade(helper, player, ClassGrade.SILVER);
 
 		kill(helper, player, helper.spawn(EntityType.ZOMBIE, INSIDE));
@@ -177,12 +179,30 @@ public class ProgressionGameTests {
 		player.die(helper.getLevel().damageSources().genericKill());
 		check(helper, "grade after losing the title", ClassGrade.GOLD, player.getAttached(ClassGrades.GRADE));
 		check(helper, "Grand advancement after losing the title", false,
-			done(helper, player, ClassGrades.advancement(ServantClasses.ARCHER.identifier(), ClassGrade.GRAND).toString()));
+			done(helper, player, ClassGrades.advancement(ServantClasses.ARCHER.identifier(), ClassGrade.GRAND)));
 
-		AdvancementHolder gold = helper.getLevel().getServer().getAdvancements()
-			.get(ClassGrades.advancement(ServantClasses.ARCHER.identifier(), ClassGrade.GOLD));
-		gold.value().criteria().keySet().forEach(criterion -> player.getAdvancements().revoke(gold, criterion));
+		revoke(player, advancement(helper, ClassGrades.advancement(ServantClasses.ARCHER.identifier(), ClassGrade.GOLD)));
 		check(helper, "grade after revoking Gold", ClassGrade.SILVER, player.getAttached(ClassGrades.GRADE));
+		helper.succeed();
+	}
+
+	@GameTest
+	public void gradesFollowMaxManaAndTheTrueNameWhateverChangesThem(GameTestHelper helper) {
+		helper.getLevel().getServer().globalAttachments().setAttached(Grand.DATA, GrandData.EMPTY);
+		ServerPlayer player = joinAs(helper, TestServants.ARCHER);
+		player.setGameMode(GameType.CREATIVE);
+		AlayaMana.addMax(player, AlayaConfig.progression().syncFullMana());
+		checkGrade(helper, player, ClassGrade.SILVER);
+		double fillBefore = AlayaConfig.progression().barFill(Progression.sync(player), false);
+		award(player, advancement(helper, ARCHER_TRUE_NAME));
+		checkGrade(helper, player, ClassGrade.GOLD);
+		check(helper, "the true name fills the stat bar", AlayaConfig.progression().barFill(Progression.sync(player), true) - fillBefore,
+			AlayaConfig.progression().trueNameSharePercent() / Percent.WHOLE);
+		check(helper, "stats follow", Progression.stats(player, classConfig(ServantClasses.ARCHER)).maxHp(), player.getMaxHealth());
+
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(AlayaItems.GRAND_PROMOTION));
+		use(player);
+		checkGrade(helper, player, ClassGrade.GRAND);
 		helper.succeed();
 	}
 
@@ -243,6 +263,6 @@ public class ProgressionGameTests {
 	private static void checkGrade(GameTestHelper helper, ServerPlayer player, ClassGrade expected) {
 		check(helper, "badge grade", expected, player.getAttached(ClassGrades.GRADE));
 		check(helper, expected.key() + " advancement", true,
-			done(helper, player, ClassGrades.advancement(ServantClasses.ARCHER.identifier(), expected).toString()));
+			done(helper, player, ClassGrades.advancement(ServantClasses.ARCHER.identifier(), expected)));
 	}
 }

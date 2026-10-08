@@ -15,7 +15,7 @@ class ClashRulesTest {
 	private static final double ENDLESS = Double.POSITIVE_INFINITY;
 
 	private static AttackData attack(String rank, boolean canClash) {
-		return new AttackData(UUID.randomUUID(), Rank.parse(rank), canClash);
+		return new AttackData(UUID.randomUUID(), Rank.parse(rank), canClash, false);
 	}
 
 	@Test
@@ -63,6 +63,6 @@ class ClashRulesTest {
 
 	@Test
 	void loserTakesNinetyPercent() {
-		assertEquals(315.0, ClashConfig.DEFAULTS.loserDamage(350), EPS);
+		assertEquals(315.0, ClashConfig.DEFAULTS.winnerContinuationDamage(350), EPS);
 	}
 }

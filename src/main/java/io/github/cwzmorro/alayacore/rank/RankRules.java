@@ -26,9 +26,4 @@ public final class RankRules {
 	public static boolean overwhelms(Rank a, Rank b) {
 		return gap(a, b) == RankGap.FAR && compareLetters(a, b) > 0;
 	}
-
-	/** Returns whether the attack wins outright; an absolute defence is never overwhelmed, whatever the attack's rank. */
-	public static boolean overwhelms(Rank attack, Rank defence, boolean absoluteDefence) {
-		return !absoluteDefence && overwhelms(attack, defence);
-	}
 }

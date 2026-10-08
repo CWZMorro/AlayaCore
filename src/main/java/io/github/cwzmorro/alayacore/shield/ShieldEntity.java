@@ -4,15 +4,18 @@ import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.combat.AttackData;
 import io.github.cwzmorro.alayacore.combat.Attacks;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
-import io.github.cwzmorro.alayacore.mana.ManaData;
 import io.github.cwzmorro.alayacore.mixin.ProjectileInvoker;
+import io.github.cwzmorro.alayacore.network.ShieldHitPayload;
 import io.github.cwzmorro.alayacore.rank.Rank;
 import io.github.cwzmorro.alayacore.rank.RankConfig;
 import io.github.cwzmorro.alayacore.rank.RankLetter;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -30,7 +33,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Provides a ranked shield for content mods to extend. Abilities call {@link #deploy}, then {@link #hold} each held tick.
- * Intercepts incoming attacks through {@link Shields}.
+ * Intercepts incoming attacks through {@link Shields} and reports hits to tracking clients.
  */
 public abstract class ShieldEntity extends Entity {
 	private static final EntityDataAccessor<Float> DATA_HP = SynchedEntityData.defineId(ShieldEntity.class, EntityDataSerializers.FLOAT);
@@ -40,6 +43,8 @@ public abstract class ShieldEntity extends Entity {
 
 	private Rank rank = new Rank(RankLetter.E, 0);
 	private long expiresAt;
+	// Exact crossing while vanilla's projectile hit handling calls back into hurtServer.
+	private @Nullable Vec3 projectileImpact;
 
 	protected ShieldEntity(EntityType<? extends ShieldEntity> type, Level level) {
 		super(type, level);
@@ -48,20 +53,6 @@ public abstract class ShieldEntity extends Entity {
 
 	public abstract ShieldShape shape();
 
-	/** Returns whether this shield blocks every attack whatever its rank; false by default. */
-	protected boolean isAbsoluteDefence() {
-		return false;
-	}
-
-	protected double maxHpFor(Rank rank) {
-		return AlayaConfig.ranks().shieldHp(rank);
-	}
-
-	/** Returns damage before the rank rule, allowing subclasses to adjust incoming damage. */
-	protected double damageTaken(DamageSource source, float amount) {
-		return amount;
-	}
-
 	public void deploy(Rank rank) {
 		this.rank = rank;
 		double max = this.maxHpFor(rank);
@@ -69,6 +60,22 @@ public abstract class ShieldEntity extends Entity {
 		this.setHp(max);
 		this.expiresAt = this.level().getGameTime() + AlayaConfig.shields().tapTicks();
 		this.fitBox();
+	}
+
+	/**
+	 * Pays upkeep, repairs as much HP as the holder's remaining mana permits, and refreshes the tap timeout.
+	 *
+	 * @return false once the holder has no mana left to hold it with: the ability should let go
+	 */
+	public boolean hold(LivingEntity holder) {
+		this.expiresAt = this.level().getGameTime() + AlayaConfig.shields().tapTicks();
+		double available = AlayaMana.available(holder);
+		RankConfig ranks = AlayaConfig.ranks();
+		double upkeep = Math.min(available, AlayaConfig.shields().holdUpkeepPerTick());
+		double repaired = ShieldRules.repairable(this.hp(), this.maxHp(), available - upkeep, ranks.manaRate(this.rank));
+		AlayaMana.spend(holder, upkeep + ranks.shieldRepairCost(this.rank, repaired));
+		this.setHp(this.hp() + repaired);
+		return AlayaMana.available(holder) > 0;
 	}
 
 	public Rank rank() {
@@ -91,20 +98,37 @@ public abstract class ShieldEntity extends Entity {
 		return this.shape().entry(this.position(), this.getLookAngle(), from, to);
 	}
 
+	public Vec3 nearestPoint(Vec3 point) {
+		return this.shape().nearestPoint(this.position(), this.getLookAngle(), point);
+	}
+
 	/**
-	 * Pays upkeep, repairs as much HP as the holder's remaining mana permits, and refreshes the tap timeout.
+	 * Applies an intercepted hit at its crossing point; callers must first check the blocked side with {@link #entry}.
 	 */
-	public void hold(LivingEntity holder) {
-		this.expiresAt = this.level().getGameTime() + AlayaConfig.shields().tapTicks();
-		ManaData mana = AlayaMana.get(holder);
-		if (mana == null) {
-			return;
+	public boolean hurtAt(ServerLevel level, DamageSource source, float amount, Vec3 point) {
+		if (this.isRemoved()) {
+			return false;
 		}
-		RankConfig ranks = AlayaConfig.ranks();
-		double upkeep = Math.min(mana.current(), AlayaConfig.shields().holdUpkeepPerTick());
-		double repaired = ShieldRules.repairable(this.hp(), this.maxHp(), mana.current() - upkeep, ranks.manaRate(this.rank));
-		AlayaMana.addCurrent(holder, -(upkeep + ranks.shieldRepairCost(this.rank, repaired)));
-		this.setHp(this.hp() + repaired);
+		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+			this.discard();
+			return true;
+		}
+		AttackData attack = Attacks.get(source.getDirectEntity());
+		double before = this.hp();
+		double hp = ShieldRules.hpAfterHit(attack == null ? null : attack.rank(), this.rank, before, this.damageTaken(source, attack, amount));
+		this.setHp(hp);
+		double taken = before - this.hp();
+		if (taken > 0) {
+			ShieldHitPayload payload = new ShieldHitPayload(this.getId(), point, (float) taken);
+			for (ServerPlayer player : PlayerLookup.tracking(this)) {
+				ServerPlayNetworking.send(player, payload);
+			}
+			this.onHit(source, attack, point, taken);
+		}
+		if (hp <= 0) {
+			this.discard();
+		}
+		return true;
 	}
 
 	@Override
@@ -113,21 +137,25 @@ public abstract class ShieldEntity extends Entity {
 			this.discard();
 			return true;
 		}
-		// An explosion's side was checked before it got here (ignoreExplosion).
-		if (!source.is(DamageTypeTags.IS_EXPLOSION)) {
-			Vec3 from = Shields.origin(source);
-			if (from == null || this.entry(from, this.position()) == null) {
-				return false;
-			}
+		if (this.projectileImpact != null) {
+			return this.hurtAt(level, source, amount, this.projectileImpact);
 		}
-		AttackData attack = Attacks.get(source.getDirectEntity());
-		double hp = ShieldRules.hpAfterHit(attack == null ? null : attack.rank(), this.rank, this.isAbsoluteDefence(), this.hp(),
-			this.damageTaken(source, amount));
-		this.setHp(hp);
-		if (hp <= 0) {
-			this.discard();
+		Vec3 from = Shields.origin(source);
+		// Vanilla explosions don't come here (ServerExplosionMixin calls hurtAt); other blasts land nearest where they came from.
+		if (source.is(DamageTypeTags.IS_EXPLOSION)) {
+			return this.hurtAt(level, source, amount, this.nearestPoint(from == null ? this.position() : from));
 		}
-		return true;
+		Vec3 fallback = from == null ? null : this.entry(from, this.position());
+		if (fallback == null) {
+			return false;
+		}
+		Vec3 point = null;
+		if (source.getDirectEntity() instanceof LivingEntity attacker) {
+			Vec3 eye = attacker.getEyePosition();
+			double reach = eye.distanceTo(this.position()) + this.shape().radius();
+			point = this.entry(eye, eye.add(attacker.getLookAngle().scale(reach)));
+		}
+		return this.hurtAt(level, source, amount, point == null ? fallback : point);
 	}
 
 	@Override
@@ -149,29 +177,6 @@ public abstract class ShieldEntity extends Entity {
 		this.catchProjectiles();
 	}
 
-	private void catchProjectiles() {
-		AABB reach = this.getBoundingBox().inflate(PROJECTILE_REACH);
-		for (Projectile projectile : this.level().getEntitiesOfClass(Projectile.class, reach, Entity::isAlive)) {
-			Vec3 now = projectile.position();
-			Vec3 crossing = this.entry(Shields.lastPosition(projectile), now);
-			if (crossing == null) {
-				crossing = this.entry(now, now.add(projectile.getDeltaMovement()));
-			}
-			if (crossing != null) {
-				projectile.setPos(crossing);
-				((ProjectileInvoker) projectile).alayacore$hitTargetOrDeflectSelf(new EntityHitResult(this, crossing));
-			}
-		}
-	}
-
-	private void fitBox() {
-		this.setBoundingBox(this.shape().bounds(this.position(), this.getLookAngle()));
-	}
-
-	private void setHp(double hp) {
-		this.entityData.set(DATA_HP, (float) hp);
-	}
-
 	@Override
 	public boolean isNoGravity() {
 		return true;
@@ -185,6 +190,54 @@ public abstract class ShieldEntity extends Entity {
 	@Override
 	public boolean canBeHitByProjectile() {
 		return false;
+	}
+
+	protected double maxHpFor(Rank rank) {
+		return AlayaConfig.ranks().shieldHp(rank);
+	}
+
+	/**
+	 * Returns damage before the rank rule, allowing subclasses to adjust incoming damage.
+	 *
+	 * @param attack the attack's data, or null for an attack without any
+	 */
+	protected double damageTaken(DamageSource source, @Nullable AttackData attack, float amount) {
+		return amount;
+	}
+
+	/**
+	 * Handles a damaging hit after client notification and before breakage, including HP lost to a rank break.
+	 */
+	protected void onHit(DamageSource source, @Nullable AttackData attack, Vec3 point, double hpTaken) {
+	}
+
+	/** Fits the box to the current shape and facing; moving shields call this after following their holder. */
+	protected final void fitBox() {
+		this.setBoundingBox(this.shape().bounds(this.position(), this.getLookAngle()));
+	}
+
+	private void setHp(double hp) {
+		this.entityData.set(DATA_HP, (float) hp);
+	}
+
+	private void catchProjectiles() {
+		AABB reach = this.getBoundingBox().inflate(PROJECTILE_REACH);
+		for (Projectile projectile : this.level().getEntitiesOfClass(Projectile.class, reach, Entity::isAlive)) {
+			Vec3 now = projectile.position();
+			Vec3 crossing = this.entry(Shields.lastPosition(projectile), now);
+			if (crossing == null) {
+				crossing = this.entry(now, now.add(projectile.getDeltaMovement()));
+			}
+			if (crossing != null) {
+				projectile.setPos(crossing);
+				this.projectileImpact = crossing;
+				try {
+					((ProjectileInvoker) projectile).alayacore$hitTargetOrDeflectSelf(new EntityHitResult(this, crossing));
+				} finally {
+					this.projectileImpact = null;
+				}
+			}
+		}
 	}
 
 	@Override

@@ -1,10 +1,5 @@
 package io.github.cwzmorro.alayacore.config;
 
-import com.electronwill.nightconfig.core.CommentedConfig;
-import com.electronwill.nightconfig.core.UnmodifiableConfig;
-import com.electronwill.nightconfig.core.io.ParsingException;
-import com.electronwill.nightconfig.toml.TomlFormat;
-import com.electronwill.nightconfig.toml.TomlWriter;
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.ability.Ability;
 import io.github.cwzmorro.alayacore.ability.AbilityConfig;
@@ -19,16 +14,7 @@ import io.github.cwzmorro.alayacore.servant.ServantClass;
 import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
 import io.github.cwzmorro.alayacore.servant.ServantConfig;
 import io.github.cwzmorro.alayacore.shield.ShieldConfig;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +97,13 @@ public final class AlayaConfig {
 		return values.shields();
 	}
 
+	/** Applies synced shield settings on the client for ability descriptions. */
+	public static void useServerShields(ShieldConfig shields) {
+		Values current = values;
+		values = new Values(current.mana(), current.ranks(), current.servants(), current.progression(), current.combat(),
+			current.abilities(), current.clash(), current.divinity(), shields);
+	}
+
 	/**
 	 * Registers a content mod's table for each config load. Call during mod initialization.
 	 * The key is normally the mod id; a null comment omits the table comment.
@@ -147,63 +140,19 @@ public final class AlayaConfig {
 	 * @return the problems found, empty if none
 	 */
 	public static List<String> load(Path file, Map<Identifier, ServantClassConfig> classDefaults, Map<Identifier, List<Double>> cooldownDefaults) {
-		List<String> warnings = new ArrayList<>();
-		CommentedConfig input = null;
-		String existing = null;
-		if (Files.exists(file)) {
-			try {
-				existing = Files.readString(file, StandardCharsets.UTF_8);
-				input = TomlFormat.instance().createParser().parse(new StringReader(existing));
-			} catch (IOException | ParsingException e) {
-				warnings.add("cannot read " + file + ", keeping the current values: " + e.getMessage());
-				return report(warnings);
-			}
-		}
-
-		CommentedConfig output = TomlFormat.newConfig(LinkedHashMap::new);
-		Set<UnmodifiableConfig> inlineTables = Collections.newSetFromMap(new IdentityHashMap<>());
-		ConfigSection root = new ConfigSection(input, output, "", warnings, inlineTables);
-		values = new Values(
-			ManaConfig.read(root.section(MANA, null)),
-			RankConfig.read(root.section(RANKS, null)),
-			ServantConfig.read(root.section(SERVANTS, null), root.section(CLASSES, ServantConfig.CLASSES_COMMENT), classDefaults),
-			ProgressionConfig.read(root.section(PROGRESSION, null)),
-			CombatConfig.read(root.section(COMBAT, null)),
-			AbilityConfig.read(root.section(ABILITIES, null), cooldownDefaults),
-			ClashConfig.read(root.section(CLASH, null)),
-			DivinityConfig.read(root.section(DIVINITY, DivinityConfig.COMMENT)),
-			ShieldConfig.read(root.section(SHIELDS, null))
-		);
-		TABLES.forEach(table -> table.read(root));
-
-		String text = HEADER + toToml(output, inlineTables);
-		if (!text.equals(existing)) {
-			write(file, text, warnings);
-		}
-		return report(warnings);
-	}
-
-	private static String toToml(CommentedConfig config, Set<UnmodifiableConfig> inlineTables) {
-		TomlWriter writer = TomlFormat.instance().createWriter();
-		writer.setWriteTableInlinePredicate(inlineTables::contains);
-		StringWriter out = new StringWriter();
-		writer.write(config, out);
-		return out.toString();
-	}
-
-	private static void write(Path file, String text, List<String> warnings) {
-		try {
-			Files.createDirectories(file.getParent());
-			Path temp = file.resolveSibling(file.getFileName() + ".tmp");
-			Files.writeString(temp, text, StandardCharsets.UTF_8);
-			Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-		} catch (IOException e) {
-			warnings.add("cannot write " + file + ": " + e.getMessage());
-		}
-	}
-
-	private static List<String> report(List<String> warnings) {
-		warnings.forEach(warning -> AlayaCore.LOGGER.warn("Config: {}", warning));
-		return List.copyOf(warnings);
+		return ConfigFile.sync(file, HEADER, true, root -> {
+			values = new Values(
+				ManaConfig.read(root.section(MANA, null)),
+				RankConfig.read(root.section(RANKS, null)),
+				ServantConfig.read(root.section(SERVANTS, null), root.section(CLASSES, ServantConfig.CLASSES_COMMENT), classDefaults),
+				ProgressionConfig.read(root.section(PROGRESSION, null)),
+				CombatConfig.read(root.section(COMBAT, null)),
+				AbilityConfig.read(root.section(ABILITIES, null), cooldownDefaults),
+				ClashConfig.read(root.section(CLASH, null)),
+				DivinityConfig.read(root.section(DIVINITY, DivinityConfig.COMMENT)),
+				ShieldConfig.read(root.section(SHIELDS, null))
+			);
+			TABLES.forEach(table -> table.read(root));
+		});
 	}
 }

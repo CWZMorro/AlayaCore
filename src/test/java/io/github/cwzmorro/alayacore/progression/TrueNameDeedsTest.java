@@ -13,10 +13,10 @@ class TrueNameDeedsTest {
 	@Test
 	void readsTheDataFormat() {
 		String json = """
-			{"branch": "fatemod:gilgamesh/root",
-			 "deeds": [{"advancement": "fatemod:gilgamesh/humbaba", "kill": "minecraft:warden"},
-			           {"advancement": "fatemod:gilgamesh/bull_of_heaven", "win_raid": true}],
-			 "awakening": "fatemod:gilgamesh/true_name"}""";
+			{"branch": "fatecraft:gilgamesh/root",
+			 "deeds": [{"advancement": "fatecraft:gilgamesh/humbaba", "kill": "minecraft:warden"},
+			           {"advancement": "fatecraft:gilgamesh/bull_of_heaven", "win_raid": true}],
+			 "awakening": "fatecraft:gilgamesh/true_name"}""";
 		TrueNameDeeds deeds = TrueNameDeeds.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)).getOrThrow();
 		assertEquals(2, deeds.deeds().size());
 		assertEquals(Optional.of(Identifier.withDefaultNamespace("warden")), deeds.deeds().getFirst().kill());

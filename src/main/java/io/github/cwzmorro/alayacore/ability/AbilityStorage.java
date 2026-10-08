@@ -34,6 +34,13 @@ public final class AbilityStorage {
 			.copyOnDeath()
 			.syncWith(AbilityPresets.STREAM_CODEC, AttachmentSyncPredicate.targetOnly()));
 
+	public static final AttachmentType<AbilitySettingValues> SETTINGS = AttachmentRegistry.create(AlayaCore.id("ability_settings"),
+		builder -> builder
+			.initializer(() -> AbilitySettingValues.EMPTY)
+			.persistent(AbilitySettingValues.CODEC)
+			.copyOnDeath()
+			.syncWith(AbilitySettingValues.STREAM_CODEC, AttachmentSyncPredicate.targetOnly()));
+
 	private AbilityStorage() {
 	}
 

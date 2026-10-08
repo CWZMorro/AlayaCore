@@ -5,9 +5,13 @@
 [![Java](https://img.shields.io/badge/Java-25-ED8B00)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue)](LICENSE)
 
-A Fabric library for [Fate mod](https://github.com/CWZMorro/Fate-Mod).
+Alaya Core is a Fabric library for Fate-inspired mods, built for [Fatecraft](https://github.com/CWZMorro/Fatecraft).
+It provides servant classes and selection, mana and progression, customizable abilities and HUDs, ranked beam clashes, shields and divinity.
+Content mods supply the servants, weapons and effects; balance and server rules are configurable.
 
-Early development (0.1.0).
+Beta version (0.1.0).
+
+Releases: [GitHub Releases](https://github.com/CWZMorro/AlayaCore/releases).
 
 ## Requirements
 
@@ -54,3 +58,5 @@ To contact me: [cwzmorro@gmail.com](mailto:cwzmorro@gmail.com)
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 The Fate media (the class icons) belong to TYPE-MOON and are not covered by the Apache License 2.0.
+
+Please credit me (CWZMorro), if you use any part of this project and want to release it to the public.

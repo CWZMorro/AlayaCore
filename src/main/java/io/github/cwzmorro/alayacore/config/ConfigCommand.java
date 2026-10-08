@@ -3,6 +3,7 @@ package io.github.cwzmorro.alayacore.config;
 import com.mojang.brigadier.Command;
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.progression.Progression;
+import io.github.cwzmorro.alayacore.shield.Shields;
 import java.util.List;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.Commands;
@@ -21,6 +22,7 @@ public final class ConfigCommand {
 					.then(Commands.literal("reload").executes(context -> {
 						List<String> warnings = AlayaConfig.load();
 						Progression.refreshAll(context.getSource().getServer());
+						context.getSource().getServer().getPlayerList().getPlayers().forEach(Shields::syncConfig);
 						Component message = warnings.isEmpty()
 							? Component.translatable("commands.alayacore.config.reload.success")
 							: Component.translatable("commands.alayacore.config.reload.warnings", warnings.size());

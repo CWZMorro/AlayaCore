@@ -11,7 +11,8 @@
       "with": [
         {
           "translate": "servant_class.alayacore.assassin"
-        }
+        },
+        "50"
       ]
     },
     "icon": {

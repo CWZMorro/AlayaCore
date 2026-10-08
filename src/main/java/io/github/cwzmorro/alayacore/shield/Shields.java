@@ -1,12 +1,21 @@
 package io.github.cwzmorro.alayacore.shield;
 
+import io.github.cwzmorro.alayacore.config.AlayaConfig;
+import io.github.cwzmorro.alayacore.network.ShieldConfigPayload;
+import io.github.cwzmorro.alayacore.network.ShieldHitPayload;
 import java.util.List;
+import java.util.Optional;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
@@ -22,7 +31,14 @@ public final class Shields {
 	private Shields() {
 	}
 
+	public static void syncConfig(ServerPlayer player) {
+		ServerPlayNetworking.send(player, new ShieldConfigPayload(AlayaConfig.shields()));
+	}
+
 	public static void register() {
+		PayloadTypeRegistry.clientboundPlay().register(ShieldHitPayload.TYPE, ShieldHitPayload.STREAM_CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(ShieldConfigPayload.TYPE, ShieldConfigPayload.STREAM_CODEC);
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> syncConfig(handler.getPlayer()));
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((victim, source, amount) -> {
 			Vec3 from = origin(source);
 			// Explosions are stopped before they hurt or push anything (shelters).
@@ -33,7 +49,7 @@ public final class Shields {
 			if (hit == null) {
 				return true;
 			}
-			hit.shield().hurtServer(level, source, amount);
+			hit.shield().hurtAt(level, source, amount, hit.entry());
 			return false;
 		});
 	}
@@ -47,10 +63,11 @@ public final class Shields {
 
 	/** Removes shielded blocks from {@code blocks} in place and returns the same list. */
 	public static List<BlockPos> unshielded(ServerLevel level, Vec3 centre, List<BlockPos> blocks) {
-		if (blocks.isEmpty()) {
+		Optional<BoundingBox> reach = BoundingBox.encapsulatingPositions(blocks);
+		if (reach.isEmpty()) {
 			return blocks;
 		}
-		List<ShieldEntity> shields = shieldsAround(level, new AABB(centre, centre));
+		List<ShieldEntity> shields = shieldsAround(level, AABB.of(reach.get()).minmax(new AABB(centre, centre)));
 		if (!shields.isEmpty()) {
 			blocks.removeIf(pos -> firstHit(shields, centre, Vec3.atCenterOf(pos)) != null);
 		}

@@ -1,6 +1,9 @@
 package io.github.cwzmorro.alayacore.servant;
 
 import io.github.cwzmorro.alayacore.config.ConfigSection;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 /**
  * The stats a servant's progression moves between. Attack, armor, toughness and
@@ -12,6 +15,16 @@ public record ServantStats(double maxHp, double attack, double armor, double tou
 	private static final double MAX_TOUGHNESS = 20.0;
 	private static final double MAX_KNOCKBACK_RESISTANCE = 1.0;
 	private static final double MAX_HEALTH = 1024.0;
+
+	public static final StreamCodec<ByteBuf, ServantStats> STREAM_CODEC = StreamCodec.composite(
+		ByteBufCodecs.DOUBLE, ServantStats::maxHp,
+		ByteBufCodecs.DOUBLE, ServantStats::attack,
+		ByteBufCodecs.DOUBLE, ServantStats::armor,
+		ByteBufCodecs.DOUBLE, ServantStats::toughness,
+		ByteBufCodecs.DOUBLE, ServantStats::speedPercent,
+		ByteBufCodecs.DOUBLE, ServantStats::knockbackResistance,
+		ServantStats::new
+	);
 
 	public static ServantStats read(ConfigSection s, ServantStats defaults) {
 		return new ServantStats(

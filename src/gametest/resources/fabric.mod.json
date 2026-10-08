@@ -17,13 +17,17 @@
 			"io.github.cwzmorro.alayacore.gametest.ProgressionGameTests",
 			"io.github.cwzmorro.alayacore.gametest.AbilityGameTests",
 			"io.github.cwzmorro.alayacore.gametest.PresetGameTests",
+			"io.github.cwzmorro.alayacore.gametest.AbilitySettingGameTests",
 			"io.github.cwzmorro.alayacore.gametest.DivinityGameTests",
-			"io.github.cwzmorro.alayacore.gametest.ShieldGameTests"
+			"io.github.cwzmorro.alayacore.gametest.ShieldGameTests",
+			"io.github.cwzmorro.alayacore.gametest.ClashGameTests"
 		],
 		"fabric-client-gametest": [
 			"io.github.cwzmorro.alayacore.gametest.ServantScreenClientTest",
 			"io.github.cwzmorro.alayacore.gametest.ServantHudClientTest",
-			"io.github.cwzmorro.alayacore.gametest.AbilityClientTest"
+			"io.github.cwzmorro.alayacore.gametest.AbilityClientTest",
+			"io.github.cwzmorro.alayacore.gametest.AbilitySettingsClientTest",
+			"io.github.cwzmorro.alayacore.gametest.PresetScreenClientTest"
 		]
 	},
 	"depends": {

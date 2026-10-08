@@ -46,10 +46,7 @@ public final class ManaEvents {
 
 		// The killer is whoever vanilla credits: the attacker, or the shooter of a projectile.
 		ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((level, killer, killed, source) -> {
-			if (killed instanceof Player) {
-				return;
-			}
-			if (killer instanceof LivingEntity living) {
+			if (!(killed instanceof Player) && killer instanceof LivingEntity living) {
 				AlayaMana.addMax(living, killed.getMaxHealth());
 			}
 		});
@@ -62,13 +59,11 @@ public final class ManaEvents {
 	}
 
 	public static void onAte(LivingEntity eater, int nutrition, Identifier food) {
-		double fraction = AlayaConfig.mana().foodFraction(nutrition, food) * AlayaServants.manaRegenMultiplier(eater);
-		AlayaMana.update(eater, mana -> ManaRules.addFractionOfMax(mana, fraction));
+		regenerate(eater, AlayaConfig.mana().foodFraction(nutrition, food));
 	}
 
 	public static void onSleptThroughNight(ServerPlayer player) {
-		double fraction = AlayaConfig.mana().sleepFraction() * AlayaServants.manaRegenMultiplier(player);
-		AlayaMana.update(player, mana -> ManaRules.addFractionOfMax(mana, fraction));
+		regenerate(player, AlayaConfig.mana().sleepFraction());
 	}
 
 	public static void onAdvancementDone(ServerPlayer player, AdvancementHolder holder) {
@@ -86,5 +81,10 @@ public final class ManaEvents {
 		updated.add(holder.id());
 		player.setAttached(ManaStorage.PAID_ADVANCEMENTS, Set.copyOf(updated));
 		AlayaMana.addMax(player, AlayaConfig.mana().challengeBonus(holder.value().rewards().experience()));
+	}
+
+	private static void regenerate(LivingEntity entity, double fractionOfMax) {
+		double fraction = fractionOfMax * AlayaServants.manaRegenMultiplier(entity);
+		AlayaMana.update(entity, mana -> ManaRules.addFractionOfMax(mana, fraction));
 	}
 }

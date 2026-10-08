@@ -48,13 +48,8 @@ public final class ServantHud {
 	// Degrees the body turns from facing the viewer: a three-quarter view.
 	private static final float PORTRAIT_BODY_TURN = 20.0F;
 	private static final int BADGE_DIAMOND = 32;
-	// Every grade sits on the same canvas, its diamond BADGE_DIAMOND wide.
-	private static final int BADGE_SIZE = 38;
-	// Side-by-side copies at increasing integer scales, so the badge is not resampled at common GUI scales; the largest
-	// is stretched at higher ones.
-	private static final int BADGE_COPIES = 4;
-	private static final int BADGE_TEXTURE_WIDTH = BADGE_SIZE * BADGE_COPIES * (BADGE_COPIES + 1) / 2;
-	private static final int BADGE_TEXTURE_HEIGHT = BADGE_SIZE * BADGE_COPIES;
+	// Every grade sits on the same 38 texel canvas, its diamond BADGE_DIAMOND wide.
+	private static final StripTexture BADGE = new StripTexture(38, 4);
 	private static final int PORTRAIT_X = MARGIN + BADGE_DIAMOND / 2 - GOLD_LINE;
 	private static final int PORTRAIT_Y = MARGIN;
 
@@ -113,10 +108,7 @@ public final class ServantHud {
 			int cornerX = PORTRAIT_X + GOLD_LINE;
 			int cornerY = PORTRAIT_Y + PORTRAIT_SIZE - 1 - GOLD_LINE;
 			Identifier badge = ServantClass.badge(classId, player.getAttachedOrElse(ClassGrades.GRADE, ClassGrade.BLACK));
-			int copy = Math.min(pixelsPerTexel, BADGE_COPIES);
-			int copySize = BADGE_SIZE * copy;
-			graphics.blit(RenderPipelines.GUI_TEXTURED, badge, cornerX - BADGE_SIZE / 2, cornerY - BADGE_SIZE / 2,
-				BADGE_SIZE * copy * (copy - 1) / 2.0F, 0.0F, BADGE_SIZE, BADGE_SIZE, copySize, copySize, BADGE_TEXTURE_WIDTH, BADGE_TEXTURE_HEIGHT);
+			BADGE.blit(graphics, badge, cornerX - BADGE.size() / 2, cornerY - BADGE.size() / 2, pixelsPerTexel);
 		}
 		if (!player.isSpectator()) {
 			extractStatus(graphics, minecraft.font, player, classId);

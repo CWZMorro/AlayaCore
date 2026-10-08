@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.gametest;
 
 import static io.github.cwzmorro.alayacore.gametest.TestAbilities.event;
 import static io.github.cwzmorro.alayacore.gametest.TestAbilities.events;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.INSIDE;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.classConfig;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.human;
@@ -22,9 +23,7 @@ import io.github.cwzmorro.alayacore.servant.ServantStorage;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -33,15 +32,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
 
 // Mock players are not ticked; timed casts use a zombie.
 public class AbilityGameTests {
-	private static final BlockPos INSIDE = new BlockPos(1, 1, 1);
 	private static final int MAX_TICKS = 3 * SharedConstants.TICKS_PER_SECOND;
-
-	private static Identifier id(ResourceKey<Ability> ability) {
-		return ability.identifier();
-	}
 
 	private static Zombie zombieCaster(GameTestHelper helper) {
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, INSIDE);
@@ -51,12 +46,12 @@ public class AbilityGameTests {
 	}
 
 	private static void press(LivingEntity entity, ResourceKey<Ability> ability) {
-		Abilities.press(entity, id(ability), 0, false);
+		Abilities.press(entity, ability.identifier(), 0, false);
 	}
 
 	private static void tap(LivingEntity entity, ResourceKey<Ability> ability) {
 		press(entity, ability);
-		Abilities.release(entity, id(ability));
+		Abilities.release(entity, ability.identifier());
 	}
 
 	private static boolean started(LivingEntity entity, ResourceKey<Ability> ability) {
@@ -87,7 +82,7 @@ public class AbilityGameTests {
 		helper.runAfterDelay(threshold + 1, () -> {
 			check(helper, "hold after the threshold", true, events(zombie).contains(event(TestAbilities.RECORDER, "hold_start")));
 			check(helper, "held ticks", true, events(zombie).contains(event(TestAbilities.RECORDER, "held")));
-			Abilities.release(zombie, id(TestAbilities.RECORDER));
+			Abilities.release(zombie, TestAbilities.RECORDER.identifier());
 			List<String> events = events(zombie);
 			check(helper, "ends with release, end", List.of(event(TestAbilities.RECORDER, "released"), event(TestAbilities.RECORDER, "end")),
 				events.subList(events.size() - 2, events.size()));
@@ -109,6 +104,7 @@ public class AbilityGameTests {
 	@GameTest(maxTicks = MAX_TICKS)
 	public void aCooldownRefusesUntilItEnds(GameTestHelper helper) {
 		ServerPlayer player = joinAs(helper, TestServants.CASTER);
+		player.setGameMode(GameType.SURVIVAL);
 		tap(player, TestAbilities.COOLDOWN);
 		press(player, TestAbilities.COOLDOWN);
 		check(helper, "ended", true, events(player).contains(event(TestAbilities.COOLDOWN, "end")));
@@ -119,6 +115,38 @@ public class AbilityGameTests {
 			check(helper, "starts after the cooldown", true, Abilities.isCasting(player));
 			helper.succeed();
 		});
+	}
+
+	@GameTest
+	public void creativeIgnoresExistingCooldownAndNeverStartsOne(GameTestHelper helper) {
+		ServerPlayer player = joinAs(helper, TestServants.CASTER);
+		player.setGameMode(GameType.SURVIVAL);
+		tap(player, TestAbilities.COOLDOWN);
+		Abilities.end(player, TestAbilities.COOLDOWN.identifier());
+		check(helper, "survival starts a cooldown", TestAbilities.COOLDOWN_SECONDS,
+			Abilities.cooldownSecondsLeft(player, TestAbilities.COOLDOWN.identifier(), 0));
+		player.setGameMode(GameType.CREATIVE);
+		check(helper, "HUD query hides the existing survival cooldown", 0.0,
+			Abilities.cooldownSecondsLeft(player, TestAbilities.COOLDOWN.identifier(), 0));
+		press(player, TestAbilities.COOLDOWN);
+		check(helper, "creative can recast during a survival cooldown", true, Abilities.isCasting(player));
+		Abilities.end(player, TestAbilities.COOLDOWN.identifier());
+		press(player, TestAbilities.COOLDOWN);
+		check(helper, "creative can immediately repeat", true, Abilities.isCasting(player));
+		Abilities.end(player, TestAbilities.COOLDOWN.identifier());
+
+		ServerPlayer fresh = joinAs(helper, TestServants.CASTER);
+		fresh.setGameMode(GameType.CREATIVE);
+		tap(fresh, TestAbilities.COOLDOWN);
+		Abilities.end(fresh, TestAbilities.COOLDOWN.identifier());
+		check(helper, "creative has no displayed cooldown", 0.0,
+			Abilities.cooldownSecondsLeft(fresh, TestAbilities.COOLDOWN.identifier(), 0));
+		fresh.setGameMode(GameType.SURVIVAL);
+		check(helper, "creative cast stored no cooldown for survival", 0.0,
+			Abilities.cooldownSecondsLeft(fresh, TestAbilities.COOLDOWN.identifier(), 0));
+		press(fresh, TestAbilities.COOLDOWN);
+		check(helper, "survival can immediately cast after a creative cast", true, Abilities.isCasting(fresh));
+		helper.succeed();
 	}
 
 	@GameTest(maxTicks = MAX_TICKS)
@@ -145,11 +173,11 @@ public class AbilityGameTests {
 	public void anAbilityCanRefuseWithoutACooldown(GameTestHelper helper) {
 		ServerPlayer player = joinAs(helper, TestServants.CASTER);
 		tap(player, TestAbilities.PICKY);
-		check(helper, "refused", false, TestAbilities.events(player).contains(TestAbilities.event(TestAbilities.PICKY, "start")));
+		check(helper, "refused", false, started(player, TestAbilities.PICKY));
 		check(helper, "no cooldown", 0.0, Abilities.cooldownSecondsLeft(player, TestAbilities.PICKY.identifier(), 0));
 		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STICK));
 		tap(player, TestAbilities.PICKY);
-		check(helper, "started", true, TestAbilities.events(player).contains(TestAbilities.event(TestAbilities.PICKY, "start")));
+		check(helper, "started", true, started(player, TestAbilities.PICKY));
 		helper.succeed();
 	}
 
@@ -172,8 +200,34 @@ public class AbilityGameTests {
 	@GameTest
 	public void aNoblePhantasmNeedsTheTrueName(GameTestHelper helper) {
 		ServerPlayer player = joinAs(helper, TestServants.CASTER);
+		player.setGameMode(GameType.SURVIVAL);
 		tap(player, TestAbilities.NOBLE_PHANTASM);
 		check(helper, "started before true name realization", false, started(player, TestAbilities.NOBLE_PHANTASM));
+		helper.succeed();
+	}
+
+	@GameTest
+	public void creativeNeedsNoTrueNameForANoblePhantasm(GameTestHelper helper) {
+		ServerPlayer player = joinAs(helper, TestServants.CASTER);
+		player.setGameMode(GameType.CREATIVE);
+		tap(player, TestAbilities.NOBLE_PHANTASM);
+		check(helper, "started in creative without the true name", true, started(player, TestAbilities.NOBLE_PHANTASM));
+		helper.succeed();
+	}
+
+	@GameTest
+	public void creativeCastsCostNoMana(GameTestHelper helper) {
+		ServerPlayer player = joinAs(helper, TestServants.CASTER);
+		player.setGameMode(GameType.CREATIVE);
+		double max = AlayaMana.get(player).max();
+		AlayaMana.update(player, m -> new ManaData(0, max));
+		press(player, TestAbilities.COSTLY);
+		check(helper, "started with no mana left", true, Abilities.isCasting(player));
+		for (int tick = 0; tick < AlayaConfig.abilities().holdThresholdTicks() + 2; tick++) {
+			Abilities.tick(player);
+		}
+		check(helper, "still casting while held", true, Abilities.isCasting(player));
+		check(helper, "mana untouched by the start cost and the held drain", 0.0, AlayaMana.get(player).current());
 		helper.succeed();
 	}
 

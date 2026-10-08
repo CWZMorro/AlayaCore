@@ -1,9 +1,11 @@
 package io.github.cwzmorro.alayacore.ability;
 
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,6 +16,7 @@ import org.jspecify.annotations.Nullable;
  * Hooks run on the server; a release before the hold threshold counts as a tap.
  */
 public abstract class Ability {
+	public static final String UNKNOWN_RANK = "???";
 	private final int modes;
 	private final boolean exclusive;
 	private final boolean noblePhantasm;
@@ -46,6 +49,19 @@ public abstract class Ability {
 		return this.cooldownSeconds;
 	}
 
+	/**
+	 * Returns the settings exposed in the preset screen, read through {@link AbilitySettings#value}.
+	 * Called on each query so config-backed bounds can follow reloads; empty by default.
+	 */
+	public List<AbilitySetting> settings() {
+		return List.of();
+	}
+
+	/** Returns the displayed rank or range, {@link #UNKNOWN_RANK} for an unknown rank, or null to hide it. */
+	public @Nullable String rankLabel() {
+		return null;
+	}
+
 	public static Component name(Identifier id) {
 		return Component.translatable(id.toLanguageKey("ability"));
 	}
@@ -54,8 +70,41 @@ public abstract class Ability {
 		return AlayaRegistries.ABILITY.getOptional(id).map(Ability::modes).orElse(1);
 	}
 
+	public static List<AbilitySetting> settings(Identifier id) {
+		return AlayaRegistries.ABILITY.getOptional(id).map(Ability::settings).orElse(List.of());
+	}
+
 	public static Component modeName(Identifier id, int mode) {
 		return Component.translatable(id.toLanguageKey("ability", "mode." + (mode + 1)));
+	}
+
+	/**
+	 * Returns description lines from {@code ability.<namespace>.<path>.description.<n>} translations,
+	 * starting at 1 and stopping at the first missing key.
+	 */
+	public static List<Component> description(Identifier id) {
+		return lines(id, id.toLanguageKey("ability", "description"));
+	}
+
+	public static List<Component> modeDescription(Identifier id, int mode) {
+		return lines(id, id.toLanguageKey("ability", "mode." + (mode + 1) + ".description"));
+	}
+
+	/**
+	 * Returns translation arguments for description lines. Runs on the client; values must be available there.
+	 */
+	public List<Object> descriptionArguments() {
+		return List.of();
+	}
+
+	private static List<Component> lines(Identifier id, String keyPrefix) {
+		Language language = Language.getInstance();
+		Object[] arguments = AlayaRegistries.ABILITY.getOptional(id).map(ability -> ability.descriptionArguments().toArray()).orElse(new Object[0]);
+		List<Component> lines = new ArrayList<>();
+		for (String key = keyPrefix + ".1"; language.has(key); key = keyPrefix + "." + (lines.size() + 1)) {
+			lines.add(Component.translatable(key, arguments));
+		}
+		return lines;
 	}
 
 	/**

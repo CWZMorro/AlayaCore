@@ -2,8 +2,8 @@ package io.github.cwzmorro.alayacore.progression;
 
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
-import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.servant.ServantClass;
+import io.github.cwzmorro.alayacore.util.Percent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,8 +14,6 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementType;
-import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.advancements.criterion.ImpossibleTrigger;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
@@ -27,8 +25,8 @@ import net.minecraft.world.item.ItemStackTemplate;
  * Grades persist except Grand, which follows the title; content mods generate their grades with {@link #chain}.
  */
 public final class ClassGrades {
-	public static final Identifier ROOT = AlayaCore.id("classes/root");
-	private static final String CRITERION = "granted";
+	private static final String PATH = "classes/";
+	public static final Identifier ROOT = AlayaCore.id(PATH + "root");
 	private static final Identifier BACKGROUND = Identifier.withDefaultNamespace("block/chiseled_quartz_block_top");
 
 	// The player's highest grade in their current class, for the HUD badge. Worked out from the advancements; not saved.
@@ -39,29 +37,27 @@ public final class ClassGrades {
 	}
 
 	public static Identifier advancement(Identifier classId, ClassGrade grade) {
-		return classId.withPath(path -> "classes/" + path + "/" + grade.key());
+		return classId.withPath(path -> PATH + path + "/" + grade.key());
 	}
 
 	public static AdvancementHolder root(ItemStackTemplate icon) {
-		return Advancement.Builder.advancement()
+		return GrantedAdvancements.impossible(Advancement.Builder.advancement()
 			.display(icon, Component.translatable("advancements.alayacore.classes.title"),
-				Component.translatable("advancements.alayacore.classes.description"), BACKGROUND, AdvancementType.TASK, false, false, false)
-			.addCriterion(CRITERION, CriteriaTriggers.IMPOSSIBLE.createCriterion(new ImpossibleTrigger.TriggerInstance()))
+				Component.translatable("advancements.alayacore.classes.description"), BACKGROUND, AdvancementType.TASK, false, false, false))
 			.build(ROOT);
 	}
 
-	/** Generates a class's grade chain under {@code root}. */
+	/**
+	 * Generates a class's grade chain under {@code root}, its descriptions baked in with the config's default sync.
+	 */
 	public static List<AdvancementHolder> chain(AdvancementHolder root, Identifier classId, Function<ClassGrade, ItemStackTemplate> icon) {
 		List<AdvancementHolder> chain = new ArrayList<>();
 		AdvancementHolder parent = root;
+		Component className = ServantClass.name(classId);
 		for (ClassGrade grade : ClassGrade.values()) {
-			Component className = ServantClass.name(classId);
-			parent = Advancement.Builder.advancement()
+			parent = GrantedAdvancements.impossible(Advancement.Builder.advancement()
 				.parent(parent)
-				.display(icon.apply(grade), Component.translatable("advancements.alayacore.grade." + grade.key() + ".title", className),
-					Component.translatable("advancements.alayacore.grade." + grade.key() + ".description", className),
-					null, grade.frame(), true, true, grade.hidden())
-				.addCriterion(CRITERION, CriteriaTriggers.IMPOSSIBLE.createCriterion(new ImpossibleTrigger.TriggerInstance()))
+				.display(icon.apply(grade), grade.title(className), grade.description(className, Percent.fromFraction(ProgressionConfig.DEFAULTS.syncFor(grade))), null, grade.frame(), true, true, grade.hidden()))
 				.build(advancement(classId, grade));
 			chain.add(parent);
 		}
@@ -81,7 +77,7 @@ public final class ClassGrades {
 			player.removeAttached(GRADE);
 			return;
 		}
-		ClassGrade earned = AlayaConfig.progression().grade(Progression.sync(player), TrueName.isRealized(player));
+		ClassGrade earned = Progression.grade(player);
 		for (ClassGrade grade : ClassGrade.values()) {
 			if (grade.ordinal() <= earned.ordinal()) {
 				grantOnce(player, advancement(classId.get(), grade));
@@ -105,7 +101,7 @@ public final class ClassGrades {
 	}
 
 	public static void onAdvancementChanged(ServerPlayer player, Identifier advancement) {
-		if (advancement.getPath().startsWith("classes/")) {
+		if (advancement.getPath().startsWith(PATH)) {
 			updateBadge(player);
 		}
 	}

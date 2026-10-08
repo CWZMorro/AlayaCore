@@ -1,6 +1,7 @@
 package io.github.cwzmorro.alayacore.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -78,7 +79,7 @@ class AlayaConfigTest {
 		assertEquals(ShieldConfig.DEFAULTS, AlayaConfig.shields());
 		assertTrue(written.contains("tap_seconds = 300"), written);
 		assertTrue(written.contains("hold_upkeep_per_second = 5.0"), written);
-		assertTrue(written.contains("loser_hit_percent = 90.0"), written);
+		assertTrue(written.contains("winner_continuation_percent = 90.0"), written);
 		assertTrue(written.contains("close_lower_drain_multiplier = 1.5"), written);
 		assertTrue(written.contains("regen_per_second = 3.0"), written);
 		assertTrue(written.contains("\"minecraft:cookie\" = 3.0"), written);
@@ -119,7 +120,7 @@ class AlayaConfigTest {
 		List<String> warnings = AlayaConfig.load(this.file(), CLASSES, ABILITIES);
 		assertEquals(2, warnings.size(), warnings.toString());
 		assertEquals(ManaConfig.DEFAULTS.sleepPercent(), AlayaConfig.mana().sleepPercent());
-		assertEquals(null, AlayaConfig.mana().sweetFoodPercent().get(Identifier.withDefaultNamespace("cookie")));
+		assertNull(AlayaConfig.mana().sweetFoodPercent().get(Identifier.withDefaultNamespace("cookie")));
 	}
 
 	@Test

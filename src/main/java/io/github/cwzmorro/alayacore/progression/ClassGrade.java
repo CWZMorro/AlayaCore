@@ -1,7 +1,9 @@
 package io.github.cwzmorro.alayacore.progression;
 
+import java.math.BigDecimal;
 import java.util.Locale;
 import net.minecraft.advancements.AdvancementType;
+import net.minecraft.network.chat.Component;
 
 /**
  * A class grade, lowest first. Each is an advancement in the "Classes" tab, per class,
@@ -32,5 +34,14 @@ public enum ClassGrade {
 
 	public String key() {
 		return this.name().toLowerCase(Locale.ROOT);
+	}
+
+	public Component title(Component className) {
+		return Component.translatable("advancements.alayacore.grade." + this.key() + ".title", className);
+	}
+
+	public Component description(Component className, double syncPercent) {
+		return Component.translatable("advancements.alayacore.grade." + this.key() + ".description", className,
+			BigDecimal.valueOf(syncPercent).stripTrailingZeros().toPlainString());
 	}
 }

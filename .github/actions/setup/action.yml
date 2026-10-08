@@ -1,0 +1,9 @@
+name: Set up Alaya Core build
+description: Install the shared Java toolchain for CI and releases.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '25'

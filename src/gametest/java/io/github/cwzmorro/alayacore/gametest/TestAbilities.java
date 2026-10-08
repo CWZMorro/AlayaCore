@@ -2,7 +2,9 @@ package io.github.cwzmorro.alayacore.gametest;
 
 import io.github.cwzmorro.alayacore.ability.Ability;
 import io.github.cwzmorro.alayacore.ability.AbilityCast;
+import io.github.cwzmorro.alayacore.ability.AbilitySetting;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
+import io.github.cwzmorro.alayacore.rank.Rank;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +27,12 @@ final class TestAbilities {
 	static final ResourceKey<Ability> COSTLY = key("costly");
 	static final ResourceKey<Ability> PICKY = key("picky");
 
+	static final ResourceKey<Ability> CONFIGURABLE = key("configurable");
+	static final AbilitySetting REACH = new AbilitySetting("reach", 1.0, 5.0, 0.5, 2.0);
+
+	static final ResourceKey<Ability> RANGED = key("ranged");
+	static final ResourceKey<Ability> UNKNOWN = key("unknown");
+
 	static final double COOLDOWN_SECONDS = 1.0;
 	static final double START_COST = 500.0;
 	static final double HELD_COST = 100.0;
@@ -36,7 +44,7 @@ final class TestAbilities {
 	}
 
 	private static ResourceKey<Ability> key(String path) {
-		return ResourceKey.create(AlayaRegistries.ABILITY_KEY, Identifier.fromNamespaceAndPath("alayacore-gametest", path));
+		return ResourceKey.create(AlayaRegistries.ABILITY_KEY, TestServants.id(path));
 	}
 
 	static void register() {
@@ -46,10 +54,24 @@ final class TestAbilities {
 		Registry.register(AlayaRegistries.ABILITY, COOLDOWN, new Recorder(new Ability.Properties().cooldownSeconds(COOLDOWN_SECONDS)));
 		Registry.register(AlayaRegistries.ABILITY, COSTLY, new Costly());
 		Registry.register(AlayaRegistries.ABILITY, PICKY, new Picky());
+		Registry.register(AlayaRegistries.ABILITY, CONFIGURABLE, new Configurable());
+		Registry.register(AlayaRegistries.ABILITY, RANGED, new Ranked(Rank.range(Rank.parse("E"), Rank.parse("A++"))));
+		Registry.register(AlayaRegistries.ABILITY, UNKNOWN, new Ranked(Ability.UNKNOWN_RANK));
 	}
 
 	static List<String> events(LivingEntity entity) {
 		return List.copyOf(EVENTS.getOrDefault(entity.getUUID(), List.of()));
+	}
+
+	private static final class Configurable extends Recorder {
+		private Configurable() {
+			super(new Ability.Properties());
+		}
+
+		@Override
+		public List<AbilitySetting> settings() {
+			return List.of(REACH);
+		}
 	}
 
 	private static final class Picky extends Recorder {
@@ -64,7 +86,11 @@ final class TestAbilities {
 	}
 
 	static String event(ResourceKey<Ability> ability, String hook) {
-		return ability.identifier().getPath() + ":" + hook;
+		return event(ability.identifier(), hook);
+	}
+
+	private static String event(Identifier ability, String hook) {
+		return ability.getPath() + ":" + hook;
 	}
 
 	private static class Recorder extends Ability {
@@ -74,7 +100,7 @@ final class TestAbilities {
 
 		private static void record(AbilityCast cast, String hook) {
 			EVENTS.computeIfAbsent(cast.entity().getUUID(), uuid -> Collections.synchronizedList(new ArrayList<>()))
-				.add(cast.abilityId().getPath() + ":" + hook);
+				.add(event(cast.abilityId(), hook));
 		}
 
 		@Override
@@ -112,6 +138,20 @@ final class TestAbilities {
 		@Override
 		public void onEnd(AbilityCast cast) {
 			record(cast, "end");
+		}
+	}
+
+	private static final class Ranked extends Ability {
+		private final String rankLabel;
+
+		private Ranked(String rankLabel) {
+			super(new Properties());
+			this.rankLabel = rankLabel;
+		}
+
+		@Override
+		public String rankLabel() {
+			return this.rankLabel;
 		}
 	}
 

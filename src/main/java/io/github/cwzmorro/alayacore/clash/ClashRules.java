@@ -9,8 +9,7 @@ import org.jspecify.annotations.Nullable;
  * Two attacks meeting. No game calls; the attacks' mana drains come from the caller.
  *
  * <p>Far apart in rank, the higher wins at once. Otherwise both sides pay mana ({@link ClashConfig#drainPerSecond})
- * until one stops or runs out, and the meeting point slides toward the side that runs out first. Burst NPs never clash
- * ({@link AttackData#canClash}).
+ * until one stops or runs out, and the meeting point slides toward the side that runs out first.
  */
 public final class ClashRules {
 	/** The two sides of a clash: A is the attack the meeting point is measured from, B the other. */

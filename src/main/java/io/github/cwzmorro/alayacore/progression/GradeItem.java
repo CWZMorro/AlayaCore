@@ -46,9 +46,8 @@ public final class GradeItem extends Item {
 			serverPlayer.sendOverlayMessage(refused);
 			return InteractionResult.FAIL;
 		}
-		ClassGrade now = ClassGrades.of(serverPlayer);
 		serverPlayer.sendOverlayMessage(Component.translatable("item.alayacore.grade.now",
-			Component.translatable("advancements.alayacore.grade." + now.key() + ".title", ServantClass.name(classId.get()))));
+			ClassGrades.of(serverPlayer).title(ServantClass.name(classId.get()))));
 		player.getItemInHand(hand).consume(1, player);
 		return InteractionResult.SUCCESS_SERVER;
 	}

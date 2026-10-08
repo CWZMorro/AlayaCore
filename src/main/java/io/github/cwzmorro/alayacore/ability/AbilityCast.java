@@ -1,7 +1,6 @@
 package io.github.cwzmorro.alayacore.ability;
 
 import io.github.cwzmorro.alayacore.api.AlayaMana;
-import io.github.cwzmorro.alayacore.mana.ManaData;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -77,19 +76,22 @@ public final class AbilityCast {
 	 * @return whether it was paid
 	 */
 	public boolean pay(double mana) {
-		ManaData current = AlayaMana.get(this.entity);
-		if (current == null || !AbilityRules.canAfford(current.current(), mana)) {
-			Abilities.refuse(this.entity, AbilityRules.Refusal.NOT_ENOUGH_MANA, 0.0);
-			this.end();
+		if (!AbilityRules.canAfford(AlayaMana.available(this.entity), mana)) {
+			this.endOutOfMana();
 			return false;
 		}
-		AlayaMana.addCurrent(this.entity, -mana);
+		AlayaMana.spend(this.entity, mana);
 		return true;
 	}
 
 	/** Ends the cast; {@link Ability#onEnd} runs once the current hook returns. */
 	public void end() {
 		this.ended = true;
+	}
+
+	public void endOutOfMana() {
+		Abilities.refuse(this.entity, AbilityRules.Refusal.NOT_ENOUGH_MANA, 0.0);
+		this.end();
 	}
 
 	void press(boolean sneaking) {

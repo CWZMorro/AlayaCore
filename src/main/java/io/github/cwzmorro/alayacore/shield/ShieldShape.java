@@ -21,20 +21,14 @@ public interface ShieldShape {
 
 	AABB bounds(Vec3 centre, Vec3 facing);
 
+	default Vec3 nearestPoint(Vec3 centre, Vec3 facing, Vec3 point) {
+		Vec3 entry = this.entry(centre, facing, point, centre);
+		return entry == null ? centre : entry;
+	}
+
 	/** A flat disc that stops attacks from the side it faces only. */
 	record Disc(double radius) implements ShieldShape {
 		private static final double THICKNESS = 0.2;
-
-		@Override
-		public AABB bounds(Vec3 centre, Vec3 facing) {
-			// Along each axis the disc reaches its radius × the sine of that axis's angle to the facing.
-			Vec3 reach = new Vec3(this.across(facing.x), this.across(facing.y), this.across(facing.z));
-			return new AABB(centre.subtract(reach), centre.add(reach)).inflate(THICKNESS / 2);
-		}
-
-		private double across(double facingPart) {
-			return this.radius * Math.sqrt(Math.max(0.0, 1.0 - facingPart * facingPart));
-		}
 
 		@Override
 		public @Nullable Vec3 entry(Vec3 centre, Vec3 facing, Vec3 from, Vec3 to) {
@@ -45,6 +39,79 @@ public interface ShieldShape {
 			}
 			Vec3 crossing = from.lerp(to, fromSide / (fromSide - toSide));
 			return crossing.distanceToSqr(centre) <= this.radius * this.radius ? crossing : null;
+		}
+
+		@Override
+		public AABB bounds(Vec3 centre, Vec3 facing) {
+			// Along each axis the disc reaches its radius × the sine of that axis's angle to the facing.
+			Vec3 reach = new Vec3(this.across(facing.x), this.across(facing.y), this.across(facing.z));
+			return new AABB(centre.subtract(reach), centre.add(reach)).inflate(THICKNESS / 2);
+		}
+
+		@Override
+		public Vec3 nearestPoint(Vec3 centre, Vec3 facing, Vec3 point) {
+			Vec3 offset = point.subtract(centre);
+			Vec3 across = offset.subtract(facing.scale(offset.dot(facing)));
+			double length = across.length();
+			return centre.add(length > this.radius ? across.scale(this.radius / length) : across);
+		}
+
+		private double across(double facingPart) {
+			return this.radius * Math.sqrt(Math.max(0.0, 1.0 - facingPart * facingPart));
+		}
+	}
+
+	/** A finite cone with a small tip disc at centre and an open base behind it; only incoming paths meet its skin. */
+	record Cone(double length, double baseRadius, double tipRadius) implements ShieldShape {
+		@Override
+		public double radius() {
+			return Math.hypot(this.length, this.baseRadius);
+		}
+
+		@Override
+		public AABB bounds(Vec3 centre, Vec3 facing) {
+			return new Disc(this.baseRadius).bounds(centre.subtract(facing.scale(this.length)), facing)
+				.minmax(new Disc(this.tipRadius).bounds(centre, facing));
+		}
+
+		@Override
+		public @Nullable Vec3 entry(Vec3 centre, Vec3 facing, Vec3 from, Vec3 to) {
+			Vec3 start = from.subtract(centre);
+			Vec3 path = to.subtract(from);
+			double along = start.dot(facing);
+			double travel = path.dot(facing);
+			Vec3 tip = new Disc(this.tipRadius).entry(centre, facing, from, to);
+			if (tip != null) {
+				return tip;
+			}
+			double slope = (this.baseRadius - this.tipRadius) / this.length;
+			Vec3 radialStart = start.subtract(facing.scale(along));
+			Vec3 radialPath = path.subtract(facing.scale(travel));
+			double width = this.tipRadius - slope * along;
+			double a = radialPath.lengthSqr() - slope * slope * travel * travel;
+			double b = 2 * (radialStart.dot(radialPath) + width * slope * travel);
+			double c = radialStart.lengthSqr() - width * width;
+			if (along <= 0 && along >= -this.length && c <= 0) {
+				return null;
+			}
+			double discriminant = b * b - 4 * a * c;
+			if (discriminant < 0) {
+				return null;
+			}
+			if (a == 0) {
+				return b == 0 ? null : this.crossing(from, path, along, travel, -c / b, b);
+			}
+			double root = Math.sqrt(discriminant);
+			double first = (-b - root) / (2 * a);
+			double second = (-b + root) / (2 * a);
+			Vec3 hit = this.crossing(from, path, along, travel, first, 2 * a * first + b);
+			return hit == null ? this.crossing(from, path, along, travel, second, 2 * a * second + b) : hit;
+		}
+
+		private @Nullable Vec3 crossing(Vec3 from, Vec3 path, double along, double travel, double t, double derivative) {
+			double axial = along + travel * t;
+			return t >= 0 && t <= 1 && axial <= 0 && axial >= -this.length && derivative <= 0
+				? from.add(path.scale(t)) : null;
 		}
 	}
 

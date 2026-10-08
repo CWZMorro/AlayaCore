@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -23,8 +25,30 @@ final class TestPlayers {
 	// Health and attributes are 32-bit floats in the game.
 	private static final double EPS = 1e-4;
 	static final int ROUND_TRIP_TICKS = 2;
+	static final BlockPos INSIDE = new BlockPos(1, 1, 1);
+	static final BlockPos BESIDE = new BlockPos(3, 1, 1);
 
 	private TestPlayers() {
+	}
+
+	static AdvancementHolder advancement(GameTestHelper helper, Identifier id) {
+		AdvancementHolder holder = helper.getLevel().getServer().getAdvancements().get(id);
+		if (holder == null) {
+			throw helper.assertionException(Component.literal("advancement " + id + " missing"));
+		}
+		return holder;
+	}
+
+	static boolean done(GameTestHelper helper, ServerPlayer player, Identifier id) {
+		return player.getAdvancements().getOrStartProgress(advancement(helper, id)).isDone();
+	}
+
+	static void award(ServerPlayer player, AdvancementHolder holder) {
+		holder.value().criteria().keySet().forEach(criterion -> player.getAdvancements().award(holder, criterion));
+	}
+
+	static void revoke(ServerPlayer player, AdvancementHolder holder) {
+		holder.value().criteria().keySet().forEach(criterion -> player.getAdvancements().revoke(holder, criterion));
 	}
 
 	static ServerPlayer join(GameTestHelper helper) {
@@ -54,6 +78,10 @@ final class TestPlayers {
 
 	static ChooseServantPayload human() {
 		return new ChooseServantPayload(ChooseServantPayload.Kind.HUMAN, Optional.empty());
+	}
+
+	static ChooseServantPayload cancel() {
+		return new ChooseServantPayload(ChooseServantPayload.Kind.CANCEL, Optional.empty());
 	}
 
 	static void release(MinecraftServer server, Identifier... servants) {

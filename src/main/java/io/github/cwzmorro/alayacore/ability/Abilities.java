@@ -5,19 +5,18 @@ import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
-import io.github.cwzmorro.alayacore.mana.ManaData;
 import io.github.cwzmorro.alayacore.network.AbilityKeyPayload;
 import io.github.cwzmorro.alayacore.progression.TrueName;
 import io.github.cwzmorro.alayacore.servant.Servant;
+import io.github.cwzmorro.alayacore.util.Durations;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.registries.Registries;
@@ -50,9 +49,10 @@ public final class Abilities {
 			}
 		});
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> endAll(entity));
-		// Also covers logging out and changing dimension.
+		// Also covers logging out and changing dimension. Only once the entity is removed: a chunk going out of reach untracks
+		// its entities while it walks their list, and ending a cast discards the entities it made, in that same list.
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
-			if (entity instanceof LivingEntity living) {
+			if (entity instanceof LivingEntity living && living.isRemoved()) {
 				endAll(living);
 			}
 		});
@@ -62,14 +62,17 @@ public final class Abilities {
 		return AlayaServants.servant(entity).map(Servant::abilities).orElse(List.of());
 	}
 
+	public static boolean owns(LivingEntity entity, Identifier abilityId) {
+		return owned(entity).contains(ResourceKey.create(AlayaRegistries.ABILITY_KEY, abilityId));
+	}
+
 	/**
 	 * Starts a cast or notifies an existing cast of another press.
 	 * Ignores unknown or unowned abilities and invalid modes.
 	 */
 	public static void press(LivingEntity entity, Identifier abilityId, int mode, boolean sneaking) {
 		Ability ability = AlayaRegistries.ABILITY.getValue(abilityId);
-		if (ability == null || mode < 0 || mode >= ability.modes()
-			|| !owned(entity).contains(ResourceKey.create(AlayaRegistries.ABILITY_KEY, abilityId))) {
+		if (ability == null || mode < 0 || mode >= ability.modes() || !owns(entity, abilityId)) {
 			return;
 		}
 		Map<Identifier, AbilityCast> casts = casts(entity);
@@ -98,7 +101,7 @@ public final class Abilities {
 		AbilityCast cast = new AbilityCast(entity, abilityId, ability, mode, sneaking, now);
 		entity.getAttachedOrCreate(AbilityStorage.CASTS).put(abilityId, cast);
 		if (cost > 0.0) {
-			AlayaMana.addCurrent(entity, -cost);
+			AlayaMana.spend(entity, cost);
 		}
 		ability.onStart(cast);
 		settle(entity, cast);
@@ -138,6 +141,14 @@ public final class Abilities {
 		}
 	}
 
+	public static void end(LivingEntity entity, Identifier abilityId) {
+		AbilityCast cast = casts(entity).get(abilityId);
+		if (cast != null) {
+			cast.end();
+			settle(entity, cast);
+		}
+	}
+
 	public static void endAll(LivingEntity entity) {
 		for (AbilityCast cast : new ArrayList<>(casts(entity).values())) {
 			cast.end();
@@ -162,7 +173,7 @@ public final class Abilities {
 	static void refuse(LivingEntity entity, AbilityRules.Refusal reason, double secondsLeft) {
 		if (entity instanceof ServerPlayer player) {
 			player.sendOverlayMessage(reason == AbilityRules.Refusal.ON_COOLDOWN
-				? Component.translatable(reason.translationKey(), String.format(Locale.ROOT, "%.1f", secondsLeft))
+				? Component.translatable(reason.translationKey(), Durations.tenths(secondsLeft))
 				: Component.translatable(reason.translationKey()));
 		}
 	}
@@ -172,7 +183,7 @@ public final class Abilities {
 
 	private static Optional<Refused> refusal(LivingEntity entity, Identifier abilityId, Ability ability, int mode,
 		Map<Identifier, AbilityCast> casts, double cost) {
-		if (ability.noblePhantasm() && entity instanceof ServerPlayer player && !TrueName.isRealized(player)) {
+		if (ability.noblePhantasm() && entity instanceof ServerPlayer player && !TrueName.allows(player)) {
 			return Optional.of(new Refused(AbilityRules.Refusal.NEEDS_TRUE_NAME, 0.0));
 		}
 		boolean exclusiveActive = casts.values().stream().anyMatch(cast -> cast.ability().exclusive());
@@ -183,8 +194,7 @@ public final class Abilities {
 		if (secondsLeft > 0.0) {
 			return Optional.of(new Refused(AbilityRules.Refusal.ON_COOLDOWN, secondsLeft));
 		}
-		ManaData mana = AlayaMana.get(entity);
-		if (cost > 0.0 && (mana == null || !AbilityRules.canAfford(mana.current(), cost))) {
+		if (cost > 0.0 && !AbilityRules.canAfford(AlayaMana.available(entity), cost)) {
 			return Optional.of(new Refused(AbilityRules.Refusal.NOT_ENOUGH_MANA, 0.0));
 		}
 		return Optional.empty();
@@ -204,7 +214,7 @@ public final class Abilities {
 		}
 		cast.ability().onEnd(cast);
 		double seconds = AlayaConfig.abilities().cooldownSeconds(cast.abilityId(), cast.ability(), cast.mode());
-		if (seconds > 0.0) {
+		if (seconds > 0.0 && !AlayaMana.spendsFree(entity)) {
 			startCooldown(entity, cast, entity.level().getGameTime() + AbilityRules.toTicks(seconds));
 		}
 	}
@@ -221,6 +231,9 @@ public final class Abilities {
 	}
 
 	public static double cooldownSecondsLeft(LivingEntity entity, Identifier abilityId, int mode) {
+		if (AlayaMana.spendsFree(entity)) {
+			return 0.0;
+		}
 		List<Long> perMode = entity.getAttachedOrElse(AbilityStorage.COOLDOWNS, Map.<Identifier, List<Long>>of()).get(abilityId);
 		return perMode == null || mode >= perMode.size() ? 0.0 : AbilityRules.secondsLeft(perMode.get(mode), entity.level().getGameTime());
 	}

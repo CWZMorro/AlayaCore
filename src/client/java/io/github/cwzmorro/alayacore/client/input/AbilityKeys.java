@@ -55,7 +55,7 @@ public final class AbilityKeys {
 		for (Ability ability : AlayaRegistries.ABILITY) {
 			Identifier id = AlayaRegistries.ABILITY.getKey(ability);
 			for (int mode = 0; mode < ability.modes(); mode++) {
-				String name = QUICK_CAST_PREFIX + id.getNamespace() + "." + id.getPath() + "." + mode;
+				String name = quickCastKeyName(id, mode);
 				QUICK_CASTS.put(name, new QuickCast(KeyMappingHelper.registerKeyMapping(
 					new KeyMapping(name, InputConstants.UNKNOWN.getValue(), CATEGORY)), id, mode));
 			}
@@ -74,7 +74,7 @@ public final class AbilityKeys {
 	}
 
 	public static Optional<KeyMapping> quickCastKey(Identifier ability, int mode) {
-		return QUICK_CASTS.values().stream().filter(q -> q.ability.equals(ability) && q.mode == mode).map(QuickCast::key).findFirst();
+		return Optional.ofNullable(QUICK_CASTS.get(quickCastKeyName(ability, mode))).map(QuickCast::key);
 	}
 
 	public static Component slotKeyName(int slot) {
@@ -137,6 +137,10 @@ public final class AbilityKeys {
 		while (PRESET_SCREEN.consumeClick()) {
 			minecraft.setScreen(new PresetScreen());
 		}
+	}
+
+	private static String quickCastKeyName(Identifier ability, int mode) {
+		return QUICK_CAST_PREFIX + ability.getNamespace() + "." + ability.getPath() + "." + mode;
 	}
 
 	private static void press(LocalPlayer player, KeyMapping key, Identifier ability, int mode) {

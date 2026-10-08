@@ -7,6 +7,7 @@ import io.github.cwzmorro.alayacore.progression.Progression;
 import java.util.function.UnaryOperator;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -44,6 +45,26 @@ public final class AlayaMana {
 			if (after.max() != before.max() && entity instanceof ServerPlayer player) {
 				Progression.refresh(player);
 			}
+		}
+	}
+
+	public static boolean spendsFree(LivingEntity entity) {
+		return entity instanceof Player player && player.hasInfiniteMaterials();
+	}
+
+	/** Returns spendable mana, infinity for free casting, or zero if the entity has no mana. */
+	public static double available(LivingEntity entity) {
+		if (spendsFree(entity)) {
+			return Double.POSITIVE_INFINITY;
+		}
+		ManaData mana = get(entity);
+		return mana == null ? 0.0 : mana.current();
+	}
+
+	/** Spends mana for casting, except for entities that {@linkplain #spendsFree cast freely}. */
+	public static void spend(LivingEntity entity, double amount) {
+		if (!spendsFree(entity)) {
+			addCurrent(entity, -amount);
 		}
 	}
 

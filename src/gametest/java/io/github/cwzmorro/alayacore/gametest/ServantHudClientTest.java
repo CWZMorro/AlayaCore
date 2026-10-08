@@ -1,9 +1,12 @@
 package io.github.cwzmorro.alayacore.gametest;
 
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.TICKS_TO_SETTLE;
+import static io.github.cwzmorro.alayacore.gametest.ClientTests.setGuiScale;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.human;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.player;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.servant;
 
+import io.github.cwzmorro.alayacore.AlayaItems;
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.client.hud.ServantHud;
 import io.github.cwzmorro.alayacore.client.screen.ServantSelectionScreen;
@@ -24,11 +27,14 @@ import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
 import net.minecraft.client.multiplayer.ClientAdvancements;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 
 public class ServantHudClientTest implements FabricClientGameTest {
 	private static final double FULL_SYNC_MANA = 100_000;
 	private static final double MANA_FRACTION = 0.75;
-	private static final int TICKS_TO_SETTLE = 5;
+	private static final int PROMOTIONS_TO_GOLD = 3;
 	// Longer than vanilla's hurt flash, so the portrait is not red in the screenshot.
 	private static final int TICKS_AFTER_DAMAGE = 20;
 	private static final int STILL_TICKS = 20;
@@ -46,6 +52,7 @@ public class ServantHudClientTest implements FabricClientGameTest {
 	@Override
 	public void runTest(ClientGameTestContext context) {
 		badgeSurvivesRejoining(context);
+		badgeFollowsPromotion(context);
 		try (TestSingleplayerContext world = context.worldBuilder().create()) {
 			context.waitForScreen(ServantSelectionScreen.class);
 			// Answered on the server directly; the screen only closes itself when clicked, so close it here.
@@ -95,20 +102,43 @@ public class ServantHudClientTest implements FabricClientGameTest {
 			context.setScreen(() -> null);
 			world.getServer().runOnServer(server -> AlayaMana.update(player(server), m -> m.withMax(FULL_SYNC_MANA)));
 			context.waitTicks(TICKS_TO_SETTLE);
-			checkClientBadge(context, "after earning Silver");
+			checkClientBadge(context, ClassGrade.SILVER, "after earning Silver");
 			save = world.getWorldSave();
 		}
 		try (TestSingleplayerContext world = save.open()) {
 			world.getClientLevel().waitForChunksRender();
 			context.waitTicks(TICKS_TO_SETTLE);
-			checkClientBadge(context, "after joining again");
+			checkClientBadge(context, ClassGrade.SILVER, "after joining again");
 		}
 	}
 
-	private static void checkClientBadge(ClientGameTestContext context, String when) {
+	private static void badgeFollowsPromotion(ClientGameTestContext context) {
+		try (TestSingleplayerContext world = context.worldBuilder().create()) {
+			context.waitForScreen(ServantSelectionScreen.class);
+			world.getServer().runOnServer(server -> ServantSelection.choose(player(server), servant(TestServants.ARCHER)));
+			context.setScreen(() -> null);
+			world.getClientLevel().waitForChunksRender();
+			world.getServer().runCommand("gamemode creative @p");
+			context.waitTicks(TICKS_TO_SETTLE);
+			checkClientBadge(context, ClassGrade.BLACK, "before the promotion");
+			context.takeScreenshot("hud-05-badge-before-promotion");
+			world.getServer().runOnServer(server -> {
+				ServerPlayer player = player(server);
+				player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(AlayaItems.GRADE_PROMOTION));
+				for (int step = 0; step < PROMOTIONS_TO_GOLD; step++) {
+					player.getMainHandItem().use(player.level(), player, InteractionHand.MAIN_HAND);
+				}
+			});
+			context.waitTicks(TICKS_TO_SETTLE);
+			checkClientBadge(context, ClassGrade.GOLD, "after the promotions");
+			context.takeScreenshot("hud-06-badge-after-promotion");
+		}
+	}
+
+	private static void checkClientBadge(ClientGameTestContext context, ClassGrade expected, String when) {
 		ClassGrade shown = context.computeOnClient(client -> client.player.getAttachedOrElse(ClassGrades.GRADE, ClassGrade.BLACK));
-		if (shown != ClassGrade.SILVER) {
-			throw new AssertionError("The badge shows " + shown + " " + when + ", not SILVER");
+		if (shown != expected) {
+			throw new AssertionError("The badge shows " + shown + " " + when + ", not " + expected);
 		}
 	}
 
@@ -169,11 +199,4 @@ public class ServantHudClientTest implements FabricClientGameTest {
 		context.getInput().resizeWindow(width, height);
 	}
 
-	private static void setGuiScale(ClientGameTestContext context, int scale) {
-		context.runOnClient(client -> {
-			client.options.guiScale().set(scale);
-			client.resizeGui();
-		});
-		context.waitTick();
-	}
 }

@@ -1,9 +1,11 @@
 package io.github.cwzmorro.alayacore;
 
 import io.github.cwzmorro.alayacore.ability.Abilities;
+import io.github.cwzmorro.alayacore.ability.AbilitySettings;
 import io.github.cwzmorro.alayacore.ability.AbilityStorage;
 import io.github.cwzmorro.alayacore.ability.Presets;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
+import io.github.cwzmorro.alayacore.clash.BeamClashes;
 import io.github.cwzmorro.alayacore.combat.Attacks;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.config.ConfigCommand;
@@ -57,10 +59,12 @@ public final class AlayaCore implements ModInitializer {
 		TrueName.register();
 		Divinity.register();
 		Shields.register();
+		BeamClashes.register();
 		Progression.register();
 		Grand.register();
 		Abilities.register();
 		Presets.register();
+		AbilitySettings.register();
 		ConfigCommand.register();
 		ManaCommand.register();
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> AlayaConfig.load());

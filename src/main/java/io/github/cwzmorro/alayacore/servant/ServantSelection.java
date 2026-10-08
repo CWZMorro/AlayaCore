@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.servant;
 
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.ability.Abilities;
+import io.github.cwzmorro.alayacore.ability.AbilitySettings;
 import io.github.cwzmorro.alayacore.ability.Presets;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
@@ -66,7 +67,18 @@ public final class ServantSelection {
 		ServerPlayNetworking.send(player, new OpenServantSelectionPayload(
 			player.level().getGameRules().get(AlayaGameRules.FORCE_RANDOM_SERVANT),
 			AlayaConfig.servants().allowDuplicates(),
-			!isUndecided(player)));
+			!isUndecided(player),
+			AlayaConfig.progression().demi(),
+			realStats()));
+	}
+
+	public static Map<Identifier, ServantStats> realStats() {
+		Map<Identifier, ServantStats> realStats = new HashMap<>();
+		for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
+			Identifier id = AlayaRegistries.SERVANT_CLASS.getKey(servantClass);
+			realStats.put(id, AlayaConfig.servants().classConfig(id, servantClass).real());
+		}
+		return realStats;
 	}
 
 	public static void choose(ServerPlayer player, ChooseServantPayload payload) {
@@ -106,9 +118,10 @@ public final class ServantSelection {
 	}
 
 	private static void apply(ServerPlayer player, Optional<Identifier> servant) {
-		// The old servant's abilities stop before the new servant takes over, and its presets go.
+		// The old servant's abilities stop before the new servant takes over, and its presets and settings go.
 		Abilities.endAll(player);
 		Presets.clear(player);
+		AbilitySettings.clear(player);
 		MinecraftServer server = player.level().getServer();
 		Map<UUID, Identifier> owners = new HashMap<>(owners(server));
 		servant.ifPresentOrElse(id -> owners.put(player.getUUID(), id), () -> owners.remove(player.getUUID()));
