@@ -1,6 +1,7 @@
 package io.github.cwzmorro.alayacore;
 
 import io.github.cwzmorro.alayacore.progression.GradeItem;
+import io.github.cwzmorro.alayacore.progression.TrueNameItem;
 import io.github.cwzmorro.alayacore.servant.SpiritOriginChangerItem;
 import java.util.function.Function;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
@@ -25,6 +26,8 @@ public final class AlayaItems {
 		new Item.Properties().rarity(Rarity.EPIC));
 	public static final Item GRADE_DEMOTION = register("grade_demotion", properties -> new GradeItem(GradeItem.Kind.DEMOTION, properties),
 		new Item.Properties().rarity(Rarity.RARE));
+	public static final Item TRUE_NAME_REALIZATION = register("true_name_realization", TrueNameItem::new,
+		new Item.Properties().rarity(Rarity.EPIC));
 	public static final Item ALL = register("all", Item::new, new Item.Properties());
 	// Alaya, All and the class badge are icons only, not in the tab and with no use. The badge's art comes from its custom model data string, <class path>/<grade>.
 	public static final Item CLASS_BADGE = register("class_badge", Item::new, new Item.Properties());
@@ -48,6 +51,7 @@ public final class AlayaItems {
 				output.accept(GRADE_PROMOTION);
 				output.accept(GRAND_PROMOTION);
 				output.accept(GRADE_DEMOTION);
+				output.accept(TRUE_NAME_REALIZATION);
 			})
 			.build());
 	}

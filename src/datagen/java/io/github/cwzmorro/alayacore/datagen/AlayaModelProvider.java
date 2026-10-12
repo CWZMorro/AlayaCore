@@ -34,6 +34,7 @@ final class AlayaModelProvider extends FabricModelProvider {
 		placeholder(items, AlayaItems.GRADE_PROMOTION, "experience_bottle");
 		placeholder(items, AlayaItems.GRAND_PROMOTION, "nether_star");
 		placeholder(items, AlayaItems.GRADE_DEMOTION, "echo_shard");
+		placeholder(items, AlayaItems.TRUE_NAME_REALIZATION, "enchanted_book");
 		List<SelectItemModel.SwitchCase<String>> badges = AlayaDataGenerator.classBadges().stream().map(badge -> {
 			Identifier model = AlayaCore.id("item/class_badge/" + badge);
 			return ItemModelUtils.when(badge, ItemModelUtils.plainModel(ModelTemplates.FLAT_ITEM.create(model, TextureMapping.layer0(new Material(model)), items.modelOutput)));

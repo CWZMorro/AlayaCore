@@ -7,6 +7,12 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1]
+
+### Added
+
+- True Name Realization item: instantly awakens the current servant, consumed on successful use except in creative.
+
 ## [0.1.0]
 
 ### Added
@@ -20,5 +26,6 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Ranked beam clashes, directional shields and divinity-based combat support for content mods.
 - Configurable balance, server game rules and mana administration commands.
 
-[Unreleased]: https://github.com/CWZMorro/AlayaCore/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/CWZMorro/AlayaCore/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/CWZMorro/AlayaCore/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/CWZMorro/AlayaCore/releases/tag/v0.1.0

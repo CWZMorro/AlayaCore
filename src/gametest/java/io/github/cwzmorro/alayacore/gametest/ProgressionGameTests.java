@@ -34,6 +34,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -253,6 +254,50 @@ public class ProgressionGameTests {
 		other.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(AlayaItems.GRAND_PROMOTION));
 		use(other);
 		check(helper, "the title held by someone else: refused", false, Grand.isGrand(other));
+		helper.succeed();
+	}
+
+	@GameTest
+	public void trueNameItemAwakensOnlyTheCurrentServant(GameTestHelper helper) {
+		TestPlayers.release(helper.getLevel().getServer(), TestServants.ARCHER, TestServants.SOLO);
+		ServerPlayer player = join(helper);
+		ServantSelection.choose(player, human());
+		player.setGameMode(GameType.SURVIVAL);
+		player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(AlayaItems.TRUE_NAME_REALIZATION, PROMOTIONS));
+		check(helper, "human refused", InteractionResult.FAIL,
+			player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND));
+		check(helper, "human keeps item", PROMOTIONS, player.getOffhandItem().getCount());
+
+		ServantSelection.open(player);
+		ServantSelection.choose(player, TestPlayers.servant(TestServants.ARCHER));
+		double maxMana = AlayaMana.get(player).max();
+		check(helper, "not awakened before use", false, TrueName.isRealized(player));
+		player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND);
+		check(helper, "awakened immediately", true, TrueName.isRealized(player));
+		check(helper, "NP allowed in survival", true, TrueName.allows(player));
+		check(helper, "kill deed granted", true, done(helper, player, ARCHER_KILL_DEED));
+		check(helper, "raid deed granted", true, done(helper, player, ARCHER_RAID_DEED));
+		check(helper, "one consumed from used hand", PROMOTIONS - 1, player.getOffhandItem().getCount());
+		check(helper, "configured awakening advancement mana reward", maxMana + AlayaConfig.mana().challengeBonus(
+			advancement(helper, ARCHER_TRUE_NAME).value().rewards().experience()), AlayaMana.get(player).max());
+		check(helper, "stats refreshed", Progression.stats(player, classConfig(ServantClasses.ARCHER)).maxHp(), player.getMaxHealth());
+		check(helper, "repeat refused", InteractionResult.FAIL,
+			player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND));
+		check(helper, "repeat keeps item", PROMOTIONS - 1, player.getOffhandItem().getCount());
+
+		ServantSelection.open(player);
+		ServantSelection.choose(player, TestPlayers.servant(TestServants.SOLO));
+		check(helper, "another servant not awakened", false, TrueName.isRealized(player));
+		check(helper, "missing awakening refused", InteractionResult.FAIL,
+			player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND));
+		check(helper, "missing awakening keeps item", PROMOTIONS - 1, player.getOffhandItem().getCount());
+		ServantSelection.open(player);
+		ServantSelection.choose(player, TestPlayers.servant(TestServants.ARCHER));
+		TrueName.unrealize(player);
+		player.setGameMode(GameType.CREATIVE);
+		player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND);
+		check(helper, "creative truly awakens rather than bypassing", true, TrueName.isRealized(player));
+		check(helper, "creative keeps item", PROMOTIONS - 1, player.getOffhandItem().getCount());
 		helper.succeed();
 	}
 
