@@ -257,10 +257,11 @@ public final class ServantSelectionScreen extends Screen {
 				blocks.add(Block.row(statLabel(stat), this.statValue(stat, real), LABEL_COLOR));
 			}
 		}
-		if (!servant.abilities().isEmpty()) {
+		List<ResourceKey<Ability>> abilities = servant.abilities().stream().filter(key -> Ability.listed(key.identifier())).toList();
+		if (!abilities.isEmpty()) {
 			blocks.add(Block.blank());
 			blocks.add(Block.heading("abilities"));
-			for (ResourceKey<Ability> key : servant.abilities()) {
+			for (ResourceKey<Ability> key : abilities) {
 				Ability ability = AlayaRegistries.ABILITY.getValue(key);
 				String rank = ability == null ? null : ability.rankLabel();
 				blocks.add(Block.row(Ability.name(key.identifier()), rank == null ? null : Component.literal(rank), LABEL_COLOR));

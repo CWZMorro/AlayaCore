@@ -126,7 +126,9 @@ public final class AlayaConfig {
 		}
 		Map<Identifier, List<Double>> cooldownDefaults = new LinkedHashMap<>();
 		for (Ability ability : AlayaRegistries.ABILITY) {
-			cooldownDefaults.put(AlayaRegistries.ABILITY.getKey(ability), ability.defaultCooldownSeconds());
+			if (!ability.passive()) {
+				cooldownDefaults.put(AlayaRegistries.ABILITY.getKey(ability), ability.defaultCooldownSeconds());
+			}
 		}
 		return load(FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME), classDefaults, cooldownDefaults);
 	}
@@ -136,7 +138,7 @@ public final class AlayaConfig {
 	 * A file that cannot be parsed is left untouched and the current values are kept.
 	 *
 	 * @param classDefaults    every servant class with its built-in values
-	 * @param cooldownDefaults every ability with its built-in cooldowns
+	 * @param cooldownDefaults every ability with a cooldown, with its built-in cooldowns
 	 * @return the problems found, empty if none
 	 */
 	public static List<String> load(Path file, Map<Identifier, ServantClassConfig> classDefaults, Map<Identifier, List<Double>> cooldownDefaults) {

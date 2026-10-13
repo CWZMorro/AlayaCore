@@ -149,7 +149,7 @@ public final class PresetScreen extends Screen {
 		this.top = Math.max(MARGIN, (this.height - this.panelHeight()) / 2);
 		this.settingsArea = this.settingsOpen ? this.openSettingsArea() : null;
 		this.settingsAbilityName = this.selected == null ? "" : this.font.substrByWidth(Ability.name(this.selected), SETTINGS_SLIDER_WIDTH).getString();
-		this.abilities = Abilities.owned(this.minecraft.player).stream().map(ResourceKey::identifier).toList();
+		this.abilities = Abilities.owned(this.minecraft.player).stream().map(ResourceKey::identifier).filter(Ability::listed).toList();
 		this.scroll = Math.clamp(this.scroll, 0, this.maxScroll());
 
 		this.presetButtons.clear();

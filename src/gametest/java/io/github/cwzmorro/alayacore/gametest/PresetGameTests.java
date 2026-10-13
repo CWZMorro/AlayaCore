@@ -63,4 +63,12 @@ public class PresetGameTests {
 		check(helper, "presets", AbilityPresets.EMPTY, Presets.get(player));
 		helper.succeed();
 	}
+
+	@GameTest
+	public void anOwnedPassiveNeverGoesInASlot(GameTestHelper helper) {
+		ServerPlayer player = joinAs(helper, TestServants.CASTER);
+		Presets.setSlot(player, 0, 0, Optional.of(TestAbilities.PASSIVE.identifier()));
+		check(helper, "passive ignored", AbilityPresets.EMPTY, Presets.get(player));
+		helper.succeed();
+	}
 }

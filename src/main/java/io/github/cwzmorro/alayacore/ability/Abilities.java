@@ -68,11 +68,11 @@ public final class Abilities {
 
 	/**
 	 * Starts a cast or notifies an existing cast of another press.
-	 * Ignores unknown or unowned abilities and invalid modes.
+	 * Ignores unknown or unowned abilities, invalid modes and passives.
 	 */
 	public static void press(LivingEntity entity, Identifier abilityId, int mode, boolean sneaking) {
 		Ability ability = AlayaRegistries.ABILITY.getValue(abilityId);
-		if (ability == null || mode < 0 || mode >= ability.modes() || !owns(entity, abilityId)) {
+		if (ability == null || ability.passive() || mode < 0 || mode >= ability.modes() || !owns(entity, abilityId)) {
 			return;
 		}
 		Map<Identifier, AbilityCast> casts = casts(entity);

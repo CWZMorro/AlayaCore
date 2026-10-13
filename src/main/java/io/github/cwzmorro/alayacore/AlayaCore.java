@@ -21,6 +21,7 @@ import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.progression.TrueName;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantSelection;
+import io.github.cwzmorro.alayacore.servant.ServantStartingItems;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
 import io.github.cwzmorro.alayacore.shield.Shields;
 import net.fabricmc.api.ModInitializer;
@@ -58,6 +59,7 @@ public final class AlayaCore implements ModInitializer {
 		ServerPlayerEvents.AFTER_RESPAWN.addPhaseOrdering(Event.DEFAULT_PHASE, AFTER_ATTACHMENTS_COPIED);
 		ManaEvents.register();
 		ServantSelection.register();
+		ServantStartingItems.register();
 		TrueName.register();
 		Divinity.register();
 		Shields.register();

@@ -13,20 +13,22 @@ import net.minecraft.world.entity.LivingEntity;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Defines a castable ability registered in {@link AlayaRegistries#ABILITY}.
- * Hooks run on the server; a release before the hold threshold counts as a tap.
+ * Defines a castable or passive ability registered in {@link AlayaRegistries#ABILITY}.
+ * Hooks run on the server for active casts only; a release before the hold threshold counts as a tap.
  */
 public abstract class Ability {
 	public static final String UNKNOWN_RANK = "???";
 	private final int modes;
 	private final boolean exclusive;
 	private final boolean noblePhantasm;
+	private final boolean passive;
 	private final List<Double> cooldownSeconds;
 
 	protected Ability(Properties properties) {
 		this.modes = properties.modes;
 		this.exclusive = properties.exclusive;
 		this.noblePhantasm = properties.noblePhantasm;
+		this.passive = properties.passive;
 		this.cooldownSeconds = properties.cooldownSeconds == null ? Collections.nCopies(this.modes, 0.0) : properties.cooldownSeconds;
 		if (this.cooldownSeconds.size() != this.modes) {
 			throw new IllegalArgumentException("expected " + this.modes + " cooldowns, one per mode, got " + this.cooldownSeconds.size());
@@ -44,6 +46,13 @@ public abstract class Ability {
 
 	public boolean noblePhantasm() {
 		return this.noblePhantasm;
+	}
+
+	/**
+	 * Returns whether the content mod applies this ability's effect directly to its owners, without casts or key slots.
+	 */
+	public boolean passive() {
+		return this.passive;
 	}
 
 	public List<Double> defaultCooldownSeconds() {
@@ -73,6 +82,14 @@ public abstract class Ability {
 
 	public static List<AbilitySetting> settings(Identifier id) {
 		return AlayaRegistries.ABILITY.getOptional(id).map(Ability::settings).orElse(List.of());
+	}
+
+	/**
+	 * Returns whether ability lists (the preset screen, its HUD and servant selection) show this ability; excludes passives but
+	 * includes unknown ids.
+	 */
+	public static boolean listed(Identifier id) {
+		return AlayaRegistries.ABILITY.getOptional(id).map(ability -> !ability.passive()).orElse(true);
 	}
 
 	public static Component modeName(Identifier id, int mode) {
@@ -154,6 +171,7 @@ public abstract class Ability {
 		private int modes = 1;
 		private boolean exclusive;
 		private boolean noblePhantasm;
+		private boolean passive;
 		private @Nullable List<Double> cooldownSeconds;
 
 		public Properties modes(int modes) {
@@ -171,6 +189,11 @@ public abstract class Ability {
 
 		public Properties noblePhantasm() {
 			this.noblePhantasm = true;
+			return this;
+		}
+
+		public Properties passive() {
+			this.passive = true;
 			return this;
 		}
 

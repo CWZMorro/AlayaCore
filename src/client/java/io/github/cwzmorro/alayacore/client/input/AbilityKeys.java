@@ -56,6 +56,9 @@ public final class AbilityKeys {
 		KeyMappingHelper.registerKeyMapping(PREVIOUS_MODE);
 		KeyMappingHelper.registerKeyMapping(PRESET_SCREEN);
 		for (Ability ability : AlayaRegistries.ABILITY) {
+			if (ability.passive()) {
+				continue;
+			}
 			Identifier id = AlayaRegistries.ABILITY.getKey(ability);
 			for (int mode = 0; mode < ability.modes(); mode++) {
 				String name = quickCastKeyName(id, mode);

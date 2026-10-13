@@ -24,6 +24,7 @@ import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -258,6 +259,21 @@ public class AbilityGameTests {
 		ServantSelection.choose(changing, human());
 		check(helper, "ended by the servant change", true, events(changing).contains(event(TestAbilities.RECORDER, "end")));
 		check(helper, "casting", false, Abilities.isCasting(changing));
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aPassiveIsOwnedButNeverPressedListedOrCooledDown(GameTestHelper helper) {
+		Identifier passive = TestAbilities.PASSIVE.identifier();
+		ServerPlayer owner = joinAs(helper, TestServants.CASTER);
+		ServerPlayer other = joinAs(helper, TestServants.ARCHER);
+		check(helper, "owned by a servant that has it", true, Abilities.owns(owner, passive));
+		check(helper, "not by one without", false, Abilities.owns(other, passive));
+		tap(owner, TestAbilities.PASSIVE);
+		check(helper, "a press does nothing", false, Abilities.isActive(owner, passive) || Abilities.isCasting(owner));
+		check(helper, "no cooldown in the config", false, AlayaConfig.abilities().cooldownSeconds().containsKey(passive));
+		check(helper, "left out of the lists", false, Ability.listed(passive));
+		check(helper, "other abilities listed", true, Ability.listed(TestAbilities.RECORDER.identifier()));
 		helper.succeed();
 	}
 }

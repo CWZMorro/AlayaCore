@@ -7,12 +7,13 @@ import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantStats;
 import java.util.List;
+import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 
 // Separate servants keep tests from claiming each other's selection.
-public final class TestServants implements ModInitializer {
+public final class TestServants implements ModInitializer, DedicatedServerModInitializer {
 	public static final Identifier SOLO = id("solo");
 	public static final Identifier CONTESTED = id("contested");
 	public static final Identifier OLD = id("old");
@@ -27,6 +28,8 @@ public final class TestServants implements ModInitializer {
 	static final int DIVINE_MAX = 5;
 	public static final Identifier RANKED = id("ranked");
 	public static final Identifier LEGEND = id("legend");
+	// STARTER, RELENTLESS, DATA_CLASS_SERVANT and BOWMAN are for server game tests only, so the client tests' selection screen is unchanged.
+	public static final Identifier STARTER = id("starter");
 	// Classes without servants force the contents list onto a second page.
 	private static final List<String> EXTRA_CLASSES = List.of("avenger", "alter_ego", "foreigner", "moon_cancer", "beast", "pretender",
 		"test_class_1", "test_class_2", "test_class_3", "test_class_4", "test_class_5", "test_class_6", "test_class_7", "test_class_8");
@@ -48,15 +51,20 @@ public final class TestServants implements ModInitializer {
 		Registry.register(AlayaRegistries.SERVANT, DIVINE, new Servant(ServantClasses.SABER, List.of(), DIVINE_MAX));
 		Registry.register(AlayaRegistries.SERVANT, ARCHER, new Servant(ServantClasses.ARCHER, List.of(TestAbilities.RECORDER)));
 		Registry.register(AlayaRegistries.SERVANT, RANKED, new Servant(ServantClasses.RIDER,
-			List.of(TestAbilities.RECORDER, TestAbilities.RANGED, TestAbilities.UNKNOWN)));
+			List.of(TestAbilities.RECORDER, TestAbilities.RANGED, TestAbilities.UNKNOWN, TestAbilities.PASSIVE)));
 		Registry.register(AlayaRegistries.SERVANT, ARCHER_TWO, new Servant(ServantClasses.ARCHER, List.of()));
 		Registry.register(AlayaRegistries.SERVANT, CASTER, new Servant(ServantClasses.SABER, List.of(TestAbilities.RECORDER,
 			TestAbilities.EXCLUSIVE, TestAbilities.NOBLE_PHANTASM, TestAbilities.COOLDOWN, TestAbilities.COSTLY, TestAbilities.PICKY,
-			TestAbilities.CONFIGURABLE)));
+			TestAbilities.CONFIGURABLE, TestAbilities.PASSIVE)));
 		Registry.register(AlayaRegistries.SERVANT, LEGEND, new Servant(ServantClasses.SABER, List.of()));
 		// After the servants above, which load Alaya Core's own classes, so these come after them.
 		for (String name : EXTRA_CLASSES) {
 			Registry.register(AlayaRegistries.SERVANT_CLASS, id(name), new ServantClass(EXTRA_CLASS_VALUES));
 		}
+	}
+
+	@Override
+	public void onInitializeServer() {
+		Registry.register(AlayaRegistries.SERVANT, STARTER, new Servant(ServantClasses.SABER, List.of()));
 	}
 }

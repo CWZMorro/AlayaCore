@@ -21,6 +21,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 
@@ -47,7 +48,7 @@ public final class PresetHud {
 		Minecraft minecraft = Minecraft.getInstance();
 		LocalPlayer player = minecraft.player;
 		float opacity = ClientConfig.presetHudOpacity();
-		if (opacity <= 0.0F || player == null || player.isSpectator() || minecraft.getDebugOverlay().showDebugScreen() || Abilities.owned(player).isEmpty()) {
+		if (opacity <= 0.0F || player == null || player.isSpectator() || minecraft.getDebugOverlay().showDebugScreen() || Abilities.owned(player).stream().map(ResourceKey::identifier).noneMatch(Ability::listed)) {
 			return;
 		}
 		AbilityPresets presets = player.getAttachedOrElse(AbilityStorage.PRESETS, AbilityPresets.EMPTY);

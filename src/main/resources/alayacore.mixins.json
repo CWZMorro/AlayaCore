@@ -9,6 +9,7 @@
 		"CakeBlockMixin",
 		"DisplayInfoAccessor",
 		"FoodPropertiesMixin",
+		"LostToVoidMixin",
 		"MarbleBlockItemMixin",
 		"MarbleExplosionMixin",
 		"MarblePlayerTeleportMixin",

@@ -3,6 +3,7 @@ package io.github.cwzmorro.alayacore.gametest;
 import io.github.cwzmorro.alayacore.ability.Ability;
 import io.github.cwzmorro.alayacore.ability.AbilityCast;
 import io.github.cwzmorro.alayacore.ability.AbilitySetting;
+import io.github.cwzmorro.alayacore.ability.PassiveAbility;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.rank.Rank;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ final class TestAbilities {
 
 	static final ResourceKey<Ability> RANGED = key("ranged");
 	static final ResourceKey<Ability> UNKNOWN = key("unknown");
+	static final ResourceKey<Ability> PASSIVE = key("passive");
 
 	static final double COOLDOWN_SECONDS = 1.0;
 	static final double START_COST = 500.0;
@@ -57,6 +59,7 @@ final class TestAbilities {
 		Registry.register(AlayaRegistries.ABILITY, CONFIGURABLE, new Configurable());
 		Registry.register(AlayaRegistries.ABILITY, RANGED, new Ranked(Rank.range(Rank.parse("E"), Rank.parse("A++"))));
 		Registry.register(AlayaRegistries.ABILITY, UNKNOWN, new Ranked(Ability.UNKNOWN_RANK));
+		Registry.register(AlayaRegistries.ABILITY, PASSIVE, new PassiveAbility());
 	}
 
 	static List<String> events(LivingEntity entity) {
