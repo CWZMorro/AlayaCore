@@ -14,10 +14,10 @@ class ProgressionConfigTest {
 	void syncFromMaxMana() {
 		assertEquals(0.0, DEFAULTS.sync(500), EPS);
 		assertEquals(0.0, DEFAULTS.sync(1_000), EPS);
-		assertEquals(0.5, DEFAULTS.sync(10_000), EPS);
-		assertEquals(1.0, DEFAULTS.sync(100_000), EPS);
-		assertEquals(1.0, DEFAULTS.sync(5_000_000), EPS); // mana keeps growing, sync stays 100%
-		assertEquals(Math.log10(3), DEFAULTS.sync(3_000) * 2, EPS); // 3k ≈ 24%
+		assertEquals(0.5, DEFAULTS.sync(Math.sqrt(10_000 * 1_000)), EPS); // 3,162 ≈ 50%
+		assertEquals(1.0, DEFAULTS.sync(10_000), EPS);
+		assertEquals(1.0, DEFAULTS.sync(12_000), EPS); // mana keeps growing to the ceiling, sync stays 100%
+		assertEquals(Math.log10(3), DEFAULTS.sync(3_000), EPS); // 3k ≈ 48%
 	}
 
 	@Test

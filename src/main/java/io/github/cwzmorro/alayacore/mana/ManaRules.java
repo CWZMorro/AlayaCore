@@ -12,9 +12,13 @@ public final class ManaRules {
 		return mana.withCurrent(Math.clamp(mana.current() + amount, 0.0, mana.max()));
 	}
 
-	/** Raises max mana; current stays as it is and fills by regeneration. */
-	public static ManaData addMax(ManaData mana, double amount) {
-		return mana.withMax(Math.max(0.0, mana.max() + amount));
+	/**
+	 * Raises max mana up to {@code ceiling}; current stays as it is and fills by regeneration.
+	 * A max already above the ceiling (set by a command) is never lowered by a gain.
+	 */
+	public static ManaData addMax(ManaData mana, double amount, double ceiling) {
+		double raised = Math.min(mana.max() + amount, Math.max(ceiling, mana.max()));
+		return mana.withMax(Math.max(0.0, raised));
 	}
 
 	public static double fraction(ManaData mana) {

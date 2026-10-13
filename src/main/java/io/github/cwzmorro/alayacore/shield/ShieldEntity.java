@@ -71,7 +71,7 @@ public abstract class ShieldEntity extends Entity {
 		double available = AlayaMana.available(holder);
 		RankConfig ranks = AlayaConfig.ranks();
 		double upkeep = Math.min(available, AlayaConfig.shields().holdUpkeepPerTick());
-		double repaired = ShieldRules.repairable(this.hp(), this.maxHp(), available - upkeep, ranks.manaRate(this.rank));
+		double repaired = ShieldRules.repairable(this.hp(), this.maxHp(), available - upkeep, ranks.repairRate(this.rank));
 		AlayaMana.spend(holder, upkeep + ranks.shieldRepairCost(this.rank, repaired));
 		this.setHp(this.hp() + repaired);
 		return AlayaMana.available(holder) > 0;
@@ -120,7 +120,7 @@ public abstract class ShieldEntity extends Entity {
 			this.discard();
 			return true;
 		}
-		AttackData attack = Attacks.get(source.getDirectEntity());
+		AttackData attack = Attacks.of(source);
 		double before = this.hp();
 		double hp = ShieldRules.hpAfterHit(attack == null ? null : attack.rank(), this.rank, before, this.damageTaken(source, attack, amount));
 		this.setHp(hp);

@@ -30,6 +30,7 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 	public static final Identifier LEGEND = id("legend");
 	// STARTER, RELENTLESS, DATA_CLASS_SERVANT and BOWMAN are for server game tests only, so the client tests' selection screen is unchanged.
 	public static final Identifier STARTER = id("starter");
+	public static final Identifier RELENTLESS = id("relentless");
 	// Classes without servants force the contents list onto a second page.
 	private static final List<String> EXTRA_CLASSES = List.of("avenger", "alter_ego", "foreigner", "moon_cancer", "beast", "pretender",
 		"test_class_1", "test_class_2", "test_class_3", "test_class_4", "test_class_5", "test_class_6", "test_class_7", "test_class_8");
@@ -66,5 +67,6 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 	@Override
 	public void onInitializeServer() {
 		Registry.register(AlayaRegistries.SERVANT, STARTER, new Servant(ServantClasses.SABER, List.of()));
+		Registry.register(AlayaRegistries.SERVANT, RELENTLESS, new Servant(ServantClasses.SABER, List.of()).meleeIgnoringHitCooldown());
 	}
 }

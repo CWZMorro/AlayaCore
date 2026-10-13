@@ -12,6 +12,7 @@ import java.util.Locale;
  */
 public record Rank(RankLetter letter, int pluses) implements Comparable<Rank> {
 	public static final int MAX_PLUSES = 2;
+	public static final int STEPS = RankLetter.values().length * (MAX_PLUSES + 1);
 	public static final String RANGE_DASH = "–";
 	public static final Codec<Rank> CODEC = Codec.STRING.comapFlatMap(text -> {
 		try {
@@ -49,6 +50,10 @@ public record Rank(RankLetter letter, int pluses) implements Comparable<Rank> {
 
 	public static String range(Rank low, Rank high) {
 		return low + RANGE_DASH + high;
+	}
+
+	public int step() {
+		return this.letter.ordinal() * (MAX_PLUSES + 1) + this.pluses;
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package io.github.cwzmorro.alayacore.api;
 
+import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.mana.ManaData;
 import io.github.cwzmorro.alayacore.mana.ManaRules;
 import io.github.cwzmorro.alayacore.mana.ManaStorage;
@@ -73,6 +74,6 @@ public final class AlayaMana {
 	}
 
 	public static void addMax(LivingEntity entity, double amount) {
-		update(entity, mana -> ManaRules.addMax(mana, amount));
+		update(entity, mana -> ManaRules.addMax(mana, amount, AlayaConfig.mana().maxCeiling()));
 	}
 }

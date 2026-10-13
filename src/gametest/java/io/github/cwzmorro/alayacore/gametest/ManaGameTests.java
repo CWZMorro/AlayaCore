@@ -79,8 +79,24 @@ public class ManaGameTests {
 		if (zombie.isAlive()) {
 			throw helper.assertionException(Component.literal("zombie survived"));
 		}
-		check(helper, "max", config().startMax() + zombie.getMaxHealth(), mana(helper, player).max());
+		check(helper, "max", config().startMax() + config().killMaxManaGain(zombie.getMaxHealth()), mana(helper, player).max());
+		check(helper, "a tenth of the victim's max HP", config().startMax() + zombie.getMaxHealth() / 10, mana(helper, player).max());
 		check(helper, "current", current, mana(helper, player).current());
+		helper.succeed();
+	}
+
+	@GameTest
+	public void everyGrowthSourceStopsAtTheCeiling(GameTestHelper helper) {
+		ServerPlayer player = join(helper);
+		double nearTop = config().maxCeiling() - 1;
+		AlayaMana.update(player, m -> m.withMax(nearTop));
+		Zombie zombie = helper.spawn(EntityType.ZOMBIE, INSIDE);
+		zombie.hurtServer(helper.getLevel(), helper.getLevel().damageSources().playerAttack(player), Float.MAX_VALUE);
+		check(helper, "a kill stops at the ceiling", config().maxCeiling(), mana(helper, player).max());
+		award(player, vanillaAdvancement(helper, "adventure/arbalistic"));
+		check(helper, "an advancement stops at the ceiling", config().maxCeiling(), mana(helper, player).max());
+		command(helper, "alayacore mana " + player.getUUID() + " max add " + COMMAND_MAX);
+		check(helper, "the command stops at the ceiling", config().maxCeiling(), mana(helper, player).max());
 		helper.succeed();
 	}
 

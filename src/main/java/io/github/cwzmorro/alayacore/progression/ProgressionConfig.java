@@ -19,7 +19,7 @@ public record ProgressionConfig(
 ) {
 	public static final ProgressionConfig DEFAULTS = new ProgressionConfig(
 		1000.0,
-		100_000.0,
+		10_000.0,
 		70.0,
 		2.0,
 		30.0,

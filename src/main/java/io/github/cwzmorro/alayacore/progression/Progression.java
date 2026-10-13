@@ -3,6 +3,7 @@ package io.github.cwzmorro.alayacore.progression;
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
+import io.github.cwzmorro.alayacore.combat.ServantBonus;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.mana.ManaData;
 import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
@@ -51,7 +52,7 @@ public final class Progression {
 			ServantStats stats = stats(player, servantClass.get());
 			double baseMaxHealth = player.getAttributeBaseValue(Attributes.MAX_HEALTH);
 			set(player, Attributes.MAX_HEALTH, stats.maxHp() - baseMaxHealth, AttributeModifier.Operation.ADD_VALUE);
-			set(player, Attributes.ATTACK_DAMAGE, stats.attack(), AttributeModifier.Operation.ADD_VALUE);
+			refreshMelee(player);
 			set(player, Attributes.ARMOR, stats.armor(), AttributeModifier.Operation.ADD_VALUE);
 			set(player, Attributes.ARMOR_TOUGHNESS, stats.toughness(), AttributeModifier.Operation.ADD_VALUE);
 			set(player, Attributes.KNOCKBACK_RESISTANCE, stats.knockbackResistance(), AttributeModifier.Operation.ADD_VALUE);
@@ -76,14 +77,26 @@ public final class Progression {
 		return AlayaConfig.progression().grade(sync(entity), entity instanceof ServerPlayer player && TrueName.isRealized(player));
 	}
 
-	public static ServantStats stats(ServerPlayer player, ServantClassConfig servantClass) {
+	public static ServantStats stats(LivingEntity entity, ServantClassConfig servantClass) {
 		ProgressionConfig config = AlayaConfig.progression();
-		double fill = config.barFill(sync(player), TrueName.isRealized(player));
+		double fill = config.barFill(sync(entity), entity instanceof ServerPlayer player && TrueName.isRealized(player));
 		return ServantStats.between(config.demi(), servantClass.real(), fill);
 	}
 
-	private static void set(ServerPlayer player, Holder<Attribute> attribute, double amount, AttributeModifier.Operation operation) {
-		AttributeInstance instance = player.getAttribute(attribute);
+	/**
+	 * Refreshes the class attack modifier before a melee hit so crits and buffs scale it with weapon damage.
+	 * Removes the modifier from entities without a servant.
+	 */
+	public static void refreshMelee(LivingEntity attacker) {
+		if (AlayaServants.servantId(attacker).isPresent()) {
+			set(attacker, Attributes.ATTACK_DAMAGE, ServantBonus.melee(attacker), AttributeModifier.Operation.ADD_VALUE);
+		} else {
+			remove(attacker, Attributes.ATTACK_DAMAGE);
+		}
+	}
+
+	private static void set(LivingEntity entity, Holder<Attribute> attribute, double amount, AttributeModifier.Operation operation) {
+		AttributeInstance instance = entity.getAttribute(attribute);
 		if (instance == null) {
 			return;
 		}
@@ -95,8 +108,8 @@ public final class Progression {
 		instance.addPermanentModifier(new AttributeModifier(MODIFIER, amount, operation));
 	}
 
-	private static void remove(ServerPlayer player, Holder<Attribute> attribute) {
-		AttributeInstance instance = player.getAttribute(attribute);
+	private static void remove(LivingEntity entity, Holder<Attribute> attribute) {
+		AttributeInstance instance = entity.getAttribute(attribute);
 		if (instance != null) {
 			instance.removeModifier(MODIFIER);
 		}

@@ -38,21 +38,33 @@ class ManaConfigTest {
 
 	@Test
 	void challengeBonus() {
-		assertEquals(5000, DEFAULTS.challengeBonus(1000), EPS); // How Did We Get Here?
-		assertEquals(425, DEFAULTS.challengeBonus(85), EPS); // Arbalistic
-		assertEquals(250, DEFAULTS.challengeBonus(40), EPS); // floor
-		assertEquals(250, DEFAULTS.challengeBonus(0), EPS); // no XP reward
-		assertEquals(5000, DEFAULTS.challengeBonus(100_000), EPS); // cap
+		assertEquals(500, DEFAULTS.challengeBonus(1000), EPS); // How Did We Get Here?
+		assertEquals(50, DEFAULTS.challengeBonus(100), EPS);
+		assertEquals(42.5, DEFAULTS.challengeBonus(85), EPS); // Arbalistic
+		assertEquals(25, DEFAULTS.challengeBonus(40), EPS); // floor
+		assertEquals(25, DEFAULTS.challengeBonus(0), EPS); // no XP reward
+		assertEquals(500, DEFAULTS.challengeBonus(2_000), EPS); // cap
 	}
 
 	@Test
-	void allVanillaChallengesGiveEighteenThousandFiveHundred() {
+	void killsGiveATenthOfTheVictimsMaxHealth() {
+		assertEquals(2, DEFAULTS.killMaxManaGain(20), EPS);
+		assertEquals(80, DEFAULTS.killMaxManaGain(800), EPS);
+	}
+
+	@Test
+	void maxManaStopsAtTwelveThousand() {
+		assertEquals(12_000, DEFAULTS.maxCeiling(), EPS);
+	}
+
+	@Test
+	void allVanillaChallengesGiveEighteenHundredFifty() {
 		// XP rewards of the 25 vanilla 26.1.2 challenge advancements (0 = none)
 		int[] xp = {1000, 500, 500, 150, 100, 100, 100, 100, 100, 100, 100, 100, 100, 85, 65, 50, 50, 50, 50, 50, 50, 50, 40, 0, 0};
 		double total = 0;
 		for (int x : xp) {
 			total += DEFAULTS.challengeBonus(x);
 		}
-		assertEquals(18_500, total, EPS);
+		assertEquals(1_850, total, EPS);
 	}
 }

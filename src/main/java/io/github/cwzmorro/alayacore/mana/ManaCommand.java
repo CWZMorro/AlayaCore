@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.api.AlayaMana;
+import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.util.Percent;
 import java.util.function.UnaryOperator;
@@ -18,9 +19,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * {@code /alayacore mana <targets> ...} (op level 2): {@code get}; {@code current set
- * <amount>}, {@code current set max} (fills it), {@code current add <amount>}; {@code max set <amount>}, {@code max add
- * <amount>}. Max mana is what sync comes from; current mana stays between 0 and max.
+ * {@code /alayacore mana <targets> ...} (op level 2): {@code get}, and {@code set} / {@code add} on {@code current}
+ * (stays between 0 and max; {@code current set max} fills it) or {@code max} (add stops at the ceiling, set does not).
  */
 public final class ManaCommand {
 	private static final String TARGETS = "targets";
@@ -47,7 +47,7 @@ public final class ManaCommand {
 							.then(Commands.literal("add").then(amount((mana, amount) -> mana.withCurrent(mana.current() + amount)))))
 						.then(Commands.literal("max")
 							.then(Commands.literal("set").then(amount(ManaData::withMax)))
-							.then(Commands.literal("add").then(amount((mana, amount) -> mana.withMax(mana.max() + amount)))))))));
+							.then(Commands.literal("add").then(amount((mana, amount) -> ManaRules.addMax(mana, amount, AlayaConfig.mana().maxCeiling())))))))));
 	}
 
 	private static RequiredArgumentBuilder<CommandSourceStack, Double> amount(ByAmount change) {

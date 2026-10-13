@@ -77,7 +77,9 @@ public class ProgressionGameTests {
 		ServantStats demi = AlayaConfig.progression().demi();
 		check(helper, "max HP", demi.maxHp(), player.getMaxHealth());
 		check(helper, "HP raised with max HP", demi.maxHp(), player.getHealth());
-		check(helper, "attack", player.getAttributeBaseValue(Attributes.ATTACK_DAMAGE) + demi.attack(), player.getAttributeValue(Attributes.ATTACK_DAMAGE));
+		check(helper, "melee attack bonus", player.getAttributeBaseValue(Attributes.ATTACK_DAMAGE)
+			+ demi.attack() * AlayaConfig.combat().meleeReferenceAttacksPerSecond() / player.getAttributeValue(Attributes.ATTACK_SPEED),
+			player.getAttributeValue(Attributes.ATTACK_DAMAGE));
 		check(helper, "armor", demi.armor(), player.getAttributeValue(Attributes.ARMOR));
 		helper.succeed();
 	}

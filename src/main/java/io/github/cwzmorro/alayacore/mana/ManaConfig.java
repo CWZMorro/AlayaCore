@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
  */
 public record ManaConfig(
 	double startMax,
+	double maxCeiling,
 	double killMaxManaMultiplier,
 	double regenPerSecond,
 	double foodPercentPerHungerPoint,
@@ -25,15 +26,16 @@ public record ManaConfig(
 ) {
 	public static final ManaConfig DEFAULTS = new ManaConfig(
 		1000.0,
-		1.0,
+		12_000.0,
+		0.1,
 		3.0,
 		0.25,
 		20.0,
 		50.0,
 		sweetFoods(),
-		5.0,
-		250.0,
-		5000.0
+		0.5,
+		25.0,
+		500.0
 	);
 
 	private static Map<Identifier, Double> sweetFoods() {
@@ -46,6 +48,8 @@ public record ManaConfig(
 	public static ManaConfig read(ConfigSection s) {
 		double startMax = s.number("start_max", " Max mana a new player starts with. Existing players keep theirs.",
 			DEFAULTS.startMax, 0.0, Double.MAX_VALUE);
+		double maxCeiling = s.number("max_ceiling", " Max mana stops growing here (kills, advancements, the add command).",
+			DEFAULTS.maxCeiling, 0.0, Double.MAX_VALUE);
 		double killMultiplier = s.number("kill_max_mana_multiplier", " Killing a mob raises max mana by its max HP × this.",
 			DEFAULTS.killMaxManaMultiplier, 0.0, Double.MAX_VALUE);
 		double regenPerSecond = s.number("regen_per_second", " Flat regeneration, mana per second.",
@@ -72,7 +76,7 @@ public record ManaConfig(
 			maxBonus = DEFAULTS.challengeMaxBonus;
 		}
 
-		return new ManaConfig(startMax, killMultiplier, regenPerSecond, foodPercent, sleepPercent, respawnPercent,
+		return new ManaConfig(startMax, maxCeiling, killMultiplier, regenPerSecond, foodPercent, sleepPercent, respawnPercent,
 			sweetFoodPercent, xpMultiplier, minBonus, maxBonus);
 	}
 

@@ -126,7 +126,7 @@ class AlayaConfigTest {
 	@Test
 	void minAboveMaxUsesDefaults() throws IOException {
 		AlayaConfig.load(this.file(), CLASSES, ABILITIES);
-		this.edit("min = 250.0", "min = 9000.0");
+		this.edit("min = 25.0", "min = 9000.0");
 		assertEquals(1, AlayaConfig.load(this.file(), CLASSES, ABILITIES).size());
 		assertEquals(ManaConfig.DEFAULTS.challengeMinBonus(), AlayaConfig.mana().challengeMinBonus());
 	}
