@@ -31,9 +31,13 @@ public final class SideTabs {
 	}
 
 	public static ScreenRectangle settingsArea(int panelX, int panelY, int panelWidth, int height, int screenWidth, int screenHeight, int margin) {
-		int x = Math.clamp(panelX + panelWidth - UNDER, margin, Math.max(margin, screenWidth - margin - SETTINGS_WIDTH));
+		return settingsArea(panelX, panelY, panelWidth, SETTINGS_WIDTH, height, screenWidth, screenHeight, margin);
+	}
+
+	public static ScreenRectangle settingsArea(int panelX, int panelY, int panelWidth, int width, int height, int screenWidth, int screenHeight, int margin) {
+		int x = Math.clamp(panelX + panelWidth - UNDER, margin, Math.max(margin, screenWidth - margin - width));
 		int y = Math.clamp(panelY, margin, Math.max(margin, screenHeight - margin - height));
-		return new ScreenRectangle(x, y, SETTINGS_WIDTH, height);
+		return new ScreenRectangle(x, y, width, height);
 	}
 
 	public static void extractSettingsTab(GuiGraphicsExtractor graphics, ScreenRectangle tab, int guiScale) {

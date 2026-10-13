@@ -12,6 +12,12 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - True Name Realization item: instantly awakens the current servant, consumed on successful use except in creative.
+- The ability settings column scrolls when it is taller than the screen.
+
+### Changed
+
+- Close-clash mana drain now scales between sub-ranks (e.g. A vs A+, A++), reaching the full 1.5× at a whole letter.
+- Numbers in ability settings and ability descriptions show without ".0".
 
 ## [0.1.0]
 

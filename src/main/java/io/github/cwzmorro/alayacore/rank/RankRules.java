@@ -3,8 +3,7 @@ package io.github.cwzmorro.alayacore.rank;
 /**
  * Comparing two ranks.
  *
- * <p>Only letters count: "+" and "++" never change the gap, so B++ vs EX is still far apart and
- * A vs A++ is the same rank. The 1.5× drain of the lower side in a close clash is
+ * <p>Only letters count: "+" and "++" never change the gap. The mana drain of a close clash is in
  * {@link io.github.cwzmorro.alayacore.clash.ClashConfig#drainPerSecond}.
  */
 public final class RankRules {

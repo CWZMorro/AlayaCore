@@ -103,6 +103,7 @@ public final class PresetScreen extends Screen {
 	private static final int SETTINGS_CONTROLS_Y = PADDING + SideTabs.COG_SIZE + PADDING;
 	private static final int SETTINGS_TITLE_GAP = 4;
 	private static final int SETTINGS_SECTION_GAP = 10;
+	private static final int SETTINGS_SCROLL_GAP = SETTINGS_SLIDER_GAP;
 	private static final int MARGIN = 4;
 
 	private static final int TEXT = 0xFF404040;
@@ -122,6 +123,9 @@ public final class PresetScreen extends Screen {
 	private List<AbilitySetting> settings = List.of();
 	private @Nullable ScreenRectangle settingsArea;
 	private String settingsAbilityName = "";
+	private int visibleSettings;
+	private int settingsScroll;
+	private boolean draggingSettings;
 	private List<FormattedCharSequence> description = List.of();
 	private int descriptionScroll;
 	private int descriptionLines;
@@ -141,10 +145,12 @@ public final class PresetScreen extends Screen {
 	protected void init() {
 		this.descriptionLines = Math.clamp((this.height - 2 * MARGIN - DESCRIPTION_Y - 2 * DESCRIPTION_PADDING - PADDING)
 			/ (this.font.lineHeight + DESCRIPTION_LINE_SPACING), 1, DESCRIPTION_LINES);
-		int right = this.settingsOpen ? SideTabs.SETTINGS_WIDTH - SideTabs.UNDER : SideTabs.WIDTH - SideTabs.UNDER;
+		this.settings = this.selected == null ? List.of() : Ability.settings(this.selected);
+		this.visibleSettings = this.roomForSettings();
+		this.settingsScroll = Math.clamp(this.settingsScroll, 0, this.maxSettingsScroll());
+		int right = this.settingsOpen ? this.settingsWidth() - SideTabs.UNDER : SideTabs.WIDTH - SideTabs.UNDER;
 		this.left = Math.max(MARGIN, Math.min((this.width - WIDTH) / 2, this.width - MARGIN - WIDTH - right));
 		this.top = Math.max(MARGIN, (this.height - this.panelHeight()) / 2);
-		this.settings = this.selected == null ? List.of() : Ability.settings(this.selected);
 		this.settingsArea = this.settingsOpen ? this.openSettingsArea() : null;
 		this.settingsAbilityName = this.selected == null ? "" : this.font.substrByWidth(Ability.name(this.selected), SETTINGS_SLIDER_WIDTH).getString();
 		this.abilities = Abilities.owned(this.minecraft.player).stream().map(ResourceKey::identifier).toList();
@@ -192,8 +198,8 @@ public final class PresetScreen extends Screen {
 				}
 			}
 			this.addRenderableWidget(OpacitySlider.create(area.left() + PADDING, area.top() + SETTINGS_CONTROLS_Y, SETTINGS_SLIDER_WIDTH));
-			for (int index = 0; index < this.settings.size(); index++) {
-				this.addRenderableWidget(this.abilitySlider(area, index));
+			for (int row = 0; row < this.visibleSettings; row++) {
+				this.addRenderableWidget(this.abilitySlider(area, row));
 			}
 		}
 		this.hint = this.font.split(Component.translatable("alayacore.screen.presets.hint"), WIDTH - PADDING - RIGHT_X);
@@ -235,21 +241,55 @@ public final class PresetScreen extends Screen {
 		return Math.max(0, this.description.size() - this.descriptionLines);
 	}
 
-	private SettingSlider abilitySlider(ScreenRectangle area, int index) {
+	private SettingSlider abilitySlider(ScreenRectangle area, int row) {
 		Identifier ability = this.selected;
-		AbilitySetting setting = this.settings.get(index);
-		return new SettingSlider(area.left() + PADDING, area.top() + this.abilitySettingY(index), SETTINGS_SLIDER_WIDTH, setting.min(), setting.max(),
+		AbilitySetting setting = this.settings.get(this.settingsScroll + row);
+		return new SettingSlider(area.left() + PADDING, area.top() + this.abilitySettingY(row), SETTINGS_SLIDER_WIDTH, setting.min(), setting.max(),
 			setting.step(), AbilitySettings.value(this.minecraft.player, ability, setting), value -> setting.label(ability, value),
 			value -> ClientPlayNetworking.send(new SetAbilitySettingPayload(ability, setting.id(), value)));
+	}
+
+	private int roomForSettings() {
+		if (this.settings.isEmpty()) {
+			return 0;
+		}
+		int room = this.height - 2 * MARGIN - this.abilitySettingY(0) - PADDING;
+		return Math.clamp((room + SETTINGS_SLIDER_GAP) / (AbstractSliderButton.DEFAULT_HEIGHT + SETTINGS_SLIDER_GAP), 1, this.settings.size());
+	}
+
+	private int maxSettingsScroll() {
+		return Math.max(0, this.settings.size() - this.visibleSettings);
+	}
+
+	private int settingsWidth() {
+		return this.maxSettingsScroll() > 0 ? SideTabs.SETTINGS_WIDTH + SETTINGS_SCROLL_GAP + ScrollBar.WIDTH : SideTabs.SETTINGS_WIDTH;
+	}
+
+	private ScreenRectangle settingsScrollBar(ScreenRectangle area) {
+		return new ScreenRectangle(area.right() - PADDING - ScrollBar.WIDTH, area.top() + this.abilitySettingY(0), ScrollBar.WIDTH,
+			this.abilitySettingY(this.visibleSettings - 1) + AbstractSliderButton.DEFAULT_HEIGHT - this.abilitySettingY(0));
+	}
+
+	private void scrollSettingsTo(int rows) {
+		int scrolled = Math.clamp(rows, 0, this.maxSettingsScroll());
+		if (scrolled != this.settingsScroll) {
+			this.settingsScroll = scrolled;
+			this.rebuildWidgets();
+		}
+	}
+
+	private void dragSettingsTo(ScreenRectangle area, double mouseY) {
+		ScreenRectangle bar = this.settingsScrollBar(area);
+		this.scrollSettingsTo(ScrollBar.scrollAt(mouseY, bar.top(), bar.height(), this.visibleSettings, this.settings.size()));
 	}
 
 	private int abilitySettingsLabelY() {
 		return SETTINGS_CONTROLS_Y + AbstractSliderButton.DEFAULT_HEIGHT + SETTINGS_SECTION_GAP;
 	}
 
-	private int abilitySettingY(int index) {
+	private int abilitySettingY(int row) {
 		return this.abilitySettingsLabelY() + this.font.lineHeight + SETTINGS_SLIDER_GAP
-			+ index * (AbstractSliderButton.DEFAULT_HEIGHT + SETTINGS_SLIDER_GAP);
+			+ row * (AbstractSliderButton.DEFAULT_HEIGHT + SETTINGS_SLIDER_GAP);
 	}
 
 	private ScreenRectangle settingsTab() {
@@ -257,10 +297,10 @@ public final class PresetScreen extends Screen {
 	}
 
 	private ScreenRectangle openSettingsArea() {
-		int count = this.settings.size();
-		int height = (count == 0 ? SETTINGS_CONTROLS_Y + AbstractSliderButton.DEFAULT_HEIGHT : this.abilitySettingY(count - 1) + AbstractSliderButton.DEFAULT_HEIGHT)
+		int rows = this.visibleSettings;
+		int height = (rows == 0 ? SETTINGS_CONTROLS_Y + AbstractSliderButton.DEFAULT_HEIGHT : this.abilitySettingY(rows - 1) + AbstractSliderButton.DEFAULT_HEIGHT)
 			+ PADDING;
-		return SideTabs.settingsArea(this.left, this.top, WIDTH, height, this.width, this.height, MARGIN);
+		return SideTabs.settingsArea(this.left, this.top, WIDTH, this.settingsWidth(), height, this.width, this.height, MARGIN);
 	}
 
 	private ScreenRectangle settingsTitle(ScreenRectangle area) {
@@ -382,6 +422,10 @@ public final class PresetScreen extends Screen {
 			if (!this.settings.isEmpty()) {
 				graphics.text(this.font, this.settingsAbilityName, area.left() + PADDING, area.top() + this.abilitySettingsLabelY(), SUBTEXT, false);
 			}
+			if (this.maxSettingsScroll() > 0) {
+				ScreenRectangle bar = this.settingsScrollBar(area);
+				ScrollBar.extract(graphics, bar.left(), bar.top(), bar.height(), this.visibleSettings, this.settings.size(), this.settingsScroll);
+			}
 		} else if (this.settingsTab().containsPoint(mouseX, mouseY)) {
 			graphics.setTooltipForNextFrame(LABEL_SETTINGS, mouseX, mouseY);
 		}
@@ -456,10 +500,16 @@ public final class PresetScreen extends Screen {
 			this.bind(this.listening, InputConstants.Type.MOUSE.getOrCreate(event.button()));
 			return true;
 		}
+		ScreenRectangle area = this.settingsArea;
+		if (area != null && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && this.maxSettingsScroll() > 0
+			&& this.settingsScrollBar(area).containsPoint((int) event.x(), (int) event.y())) {
+			this.draggingSettings = true;
+			this.dragSettingsTo(area, event.y());
+			return true;
+		}
 		if (super.mouseClicked(event, doubleClick)) {
 			return true;
 		}
-		ScreenRectangle area = this.settingsArea;
 		if ((area != null ? this.settingsTitle(area) : this.settingsTab()).containsPoint((int) event.x(), (int) event.y())) {
 			this.settingsOpen = !this.settingsOpen;
 			this.rebuildWidgets();
@@ -473,6 +523,7 @@ public final class PresetScreen extends Screen {
 			this.selected = this.abilities.get(this.scroll + row);
 			this.quickCastScroll = 0;
 			this.descriptionScroll = 0;
+			this.settingsScroll = 0;
 			this.rebuildWidgets();
 			return true;
 		}
@@ -490,8 +541,25 @@ public final class PresetScreen extends Screen {
 	}
 
 	@Override
+	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+		ScreenRectangle area = this.settingsArea;
+		if (this.draggingSettings && area != null) {
+			this.dragSettingsTo(area, event.y());
+			return true;
+		}
+		return super.mouseDragged(event, dragX, dragY);
+	}
+
+	@Override
+	public boolean mouseReleased(MouseButtonEvent event) {
+		this.draggingSettings = false;
+		return super.mouseReleased(event);
+	}
+
+	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
 		if (this.settingsArea != null && this.settingsArea.containsPoint((int) mouseX, (int) mouseY)) {
+			this.scrollSettingsTo(this.settingsScroll + ScrollBar.wheelLines(scrollY));
 			return true;
 		}
 		// Like the hotbar: scrolling up goes back.

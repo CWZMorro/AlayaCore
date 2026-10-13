@@ -1,5 +1,6 @@
 package io.github.cwzmorro.alayacore.ability;
 
+import io.github.cwzmorro.alayacore.util.Numbers;
 import io.github.cwzmorro.alayacore.util.Steps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -24,7 +25,6 @@ public record AbilitySetting(String id, double min, double max, double step, dou
 	}
 
 	public Component label(Identifier ability, double value) {
-		Object shown = value == Math.rint(value) ? (Object) (long) value : (Object) value;
-		return Component.translatable(ability.toLanguageKey("ability", "setting." + this.id), shown);
+		return Component.translatable(ability.toLanguageKey("ability", "setting." + this.id), Numbers.shown(value));
 	}
 }

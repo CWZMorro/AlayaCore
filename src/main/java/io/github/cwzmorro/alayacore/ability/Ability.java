@@ -1,6 +1,7 @@
 package io.github.cwzmorro.alayacore.ability;
 
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
+import io.github.cwzmorro.alayacore.util.Numbers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,7 +100,7 @@ public abstract class Ability {
 
 	private static List<Component> lines(Identifier id, String keyPrefix) {
 		Language language = Language.getInstance();
-		Object[] arguments = AlayaRegistries.ABILITY.getOptional(id).map(ability -> ability.descriptionArguments().toArray()).orElse(new Object[0]);
+		Object[] arguments = AlayaRegistries.ABILITY.getOptional(id).map(ability -> ability.descriptionArguments().stream().map(Numbers::shown).toArray()).orElse(new Object[0]);
 		List<Component> lines = new ArrayList<>();
 		for (String key = keyPrefix + ".1"; language.has(key); key = keyPrefix + "." + (lines.size() + 1)) {
 			lines.add(Component.translatable(key, arguments));

@@ -20,11 +20,19 @@ public record ClashConfig(double closeLowerDrainMultiplier, double winnerContinu
 	}
 
 	/**
-	 * Returns clash drain per second, scaling the ordinary drain of a side one letter lower by the configured surcharge.
+	 * Returns clash drain per second, scaling the lower rank's ordinary drain by the configured surcharge.
+	 * Same-letter plus steps interpolate toward the full-letter multiplier.
 	 */
 	public double drainPerSecond(double ownDrainPerSecond, Rank own, Rank other) {
 		boolean closeAndLower = RankRules.gap(own, other) == RankGap.CLOSE && RankRules.compareLetters(own, other) < 0;
-		return closeAndLower ? ownDrainPerSecond * this.closeLowerDrainMultiplier : ownDrainPerSecond;
+		if (closeAndLower) {
+			return ownDrainPerSecond * this.closeLowerDrainMultiplier;
+		}
+		if (own.letter() == other.letter() && own.pluses() < other.pluses()) {
+			double share = (double) (other.pluses() - own.pluses()) / (Rank.MAX_PLUSES + 1);
+			return ownDrainPerSecond * (1.0 + (this.closeLowerDrainMultiplier - 1.0) * share);
+		}
+		return ownDrainPerSecond;
 	}
 
 	public double winnerContinuationDamage(double damage) {
