@@ -12,6 +12,7 @@ import io.github.cwzmorro.alayacore.rank.Rank;
 import io.github.cwzmorro.alayacore.shield.ClientShieldEvents;
 import io.github.cwzmorro.alayacore.shield.ShieldEntity;
 import io.github.cwzmorro.alayacore.shield.Shields;
+import io.github.cwzmorro.alayacore.shield.SolidShields;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
@@ -30,17 +31,21 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.monster.zombie.Husk;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
+import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class ShieldGameTests {
@@ -259,12 +264,46 @@ public class ShieldGameTests {
 		attacker.lookAt(EntityAnchorArgument.Anchor.EYES, aimed);
 		hit(helper, attacker, shield);
 		check(helper, "look ray on disc", true, shield.hitPoint.distanceTo(aimed) < CLOSE);
-		attacker.setXRot(LOOKING_STRAIGHT_UP);
-		hit(helper, attacker, shield);
-		check(helper, "fallback to centre", shield.position(), shield.hitPoint);
-		hit(helper, mob(helper, BEHIND), shield);
-		hit(helper, attacker, shield, 0.0F);
-		check(helper, "no hook for refused or zero damage hits", 2, shield.hits);
+		// A shield takes each attack once a tick: the second hit comes on the next.
+		helper.runAfterDelay(1, () -> {
+			attacker.setXRot(LOOKING_STRAIGHT_UP);
+			hit(helper, attacker, shield);
+			check(helper, "fallback to centre", shield.position(), shield.hitPoint);
+			hit(helper, mob(helper, BEHIND), shield);
+			hit(helper, attacker, shield, 0.0F);
+			check(helper, "no hook for refused or zero damage hits", 2, shield.hits);
+			helper.succeed();
+		});
+	}
+
+	@GameTest
+	public void aShieldTakesEachAttackOnceATickByItsLargestHit(GameTestHelper helper) {
+		ShieldEntity shield = shield(helper, TestShields.DISC, RANK);
+		Husk attacker = mob(helper, IN_FRONT);
+		hit(helper, attacker, mob(helper, BEHIND), HIT);
+		hit(helper, attacker, mob(helper, BEHIND.east()), 2 * HIT);
+		hit(helper, attacker, mob(helper, BEHIND.west()), HIT);
+		check(helper, "the largest of one attack's hits this tick", shield.maxHp() - 2 * HIT, shield.hp());
+		hit(helper, mob(helper, IN_FRONT.east()), mob(helper, BEHIND.below()), HIT);
+		check(helper, "another attack counts on its own", shield.maxHp() - 3 * HIT, shield.hp());
+		helper.runAfterDelay(1, () -> {
+			hit(helper, attacker, mob(helper, BEHIND.above()), HIT);
+			check(helper, "the next tick it counts again", shield.maxHp() - 4 * HIT, shield.hp());
+			helper.succeed();
+		});
+	}
+
+	@GameTest
+	public void aSolidShieldIsInTheWayOfABodyPutIntoItButNotOfItsCaster(GameTestHelper helper) {
+		TestShields.TestShield solid = shield(helper, TestShields.SOLID_DISC, RANK);
+		Husk body = mob(helper, IN_FRONT);
+		Husk caster = mob(helper, IN_FRONT.east());
+		solid.caster = caster.getUUID();
+		Vec3 centre = helper.absoluteVec(SHIELD);
+		AABB onIt = body.getBoundingBox().move(centre.x - body.getX(), 0, centre.z - body.getZ());
+		check(helper, "a body put into it", true, SolidShields.collides(body, onIt));
+		check(helper, "its caster", false, SolidShields.collides(caster, onIt));
+		check(helper, "a body in front of it", false, SolidShields.collides(body, body.getBoundingBox()));
 		helper.succeed();
 	}
 
@@ -386,6 +425,28 @@ public class ShieldGameTests {
 		ClientShieldEvents.HIT.invoker().onHit(dome, dome.position(), HIT);
 		check(helper, "the disc's look drew its hit", 1, disc.looks);
 		check(helper, "no other type's hit reached it", 0, dome.looks);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void anAttackIsMeasuredFromWhereItsHitsComeFrom(GameTestHelper helper) {
+		ShieldEntity shield = shield(helper, TestShields.DISC, RANK);
+		ServerLevel level = helper.getLevel();
+		TestShields.RemoteAttack attack = helper.spawn(TestShields.REMOTE_ATTACK, Vec3.atCenterOf(BEHIND.west()));
+		attack.from = helper.absoluteVec(Vec3.atCenterOf(IN_FRONT.south()));
+		DamageSource source = level.damageSources().source(DamageTypes.GENERIC, attack, null);
+		Husk behind = mob(helper, BEHIND);
+		Minecart cart = helper.spawn(EntityType.MINECART, Vec3.atBottomCenterOf(BEHIND.east()));
+		cart.setNoGravity(true);
+		check(helper, "a creature behind is spared", false, Shields.hurt(level, behind, source, HIT));
+		check(helper, "and is unhurt", behind.getMaxHealth(), behind.getHealth());
+		check(helper, "so is anything else behind", false, Shields.hurt(level, cart, source, HIT));
+		check(helper, "and undamaged", 0.0F, cart.getDamage());
+		check(helper, "the shield took them, once in the tick", shield.maxHp() - HIT, shield.hp());
+		BlockPos blockBehind = helper.absolutePos(BEHIND.below());
+		BlockPos blockInFront = helper.absolutePos(IN_FRONT.below());
+		check(helper, "only the block in front may break", List.of(blockInFront),
+			Shields.unshielded(level, attack, new ArrayList<>(List.of(blockBehind, blockInFront))));
 		helper.succeed();
 	}
 

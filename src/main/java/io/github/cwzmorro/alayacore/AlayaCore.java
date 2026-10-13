@@ -7,6 +7,7 @@ import io.github.cwzmorro.alayacore.ability.Presets;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.clash.BeamClashes;
 import io.github.cwzmorro.alayacore.combat.Attacks;
+import io.github.cwzmorro.alayacore.combat.ContinuousSource;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.config.ConfigCommand;
 import io.github.cwzmorro.alayacore.divinity.Divinity;
@@ -56,6 +57,7 @@ public final class AlayaCore implements ModInitializer {
 		ServantStorage.init();
 		AbilityStorage.init();
 		Attacks.init();
+		ContinuousSource.init();
 		ServerPlayerEvents.AFTER_RESPAWN.addPhaseOrdering(Event.DEFAULT_PHASE, AFTER_ATTACHMENTS_COPIED);
 		ManaEvents.register();
 		ServantSelection.register();

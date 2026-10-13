@@ -15,6 +15,9 @@ public final class AttackTags {
 	/** What a thrown weapon flies through without striking it, such as other thrown weapons; {@link #thrownWeaponsPassThrough} adds shields. */
 	public static final TagKey<EntityType<?>> THROWN_WEAPONS_PASS_THROUGH = TagKey.create(Registries.ENTITY_TYPE,
 		AlayaCore.id("thrown_weapons_pass_through"));
+	/** Thrown weapons that an exact copy projected to meet them in flight counters; content mods list theirs. */
+	public static final TagKey<EntityType<?>> COUNTERABLE_THROWN_WEAPONS = TagKey.create(Registries.ENTITY_TYPE,
+		AlayaCore.id("counterable_thrown_weapons"));
 
 	private AttackTags() {
 	}

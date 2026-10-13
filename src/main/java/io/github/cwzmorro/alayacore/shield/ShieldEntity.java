@@ -9,9 +9,12 @@ import io.github.cwzmorro.alayacore.network.ShieldHitPayload;
 import io.github.cwzmorro.alayacore.rank.Rank;
 import io.github.cwzmorro.alayacore.rank.RankConfig;
 import io.github.cwzmorro.alayacore.rank.RankLetter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.core.Holder;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -19,6 +22,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -44,6 +48,8 @@ public abstract class ShieldEntity extends Entity {
 	private long expiresAt;
 	// Exact crossing while vanilla's projectile hit handling calls back into hurtServer.
 	private @Nullable Vec3 projectileImpact;
+	private final Map<HitBy, Float> takenThisTick = new HashMap<>();
+	private long takenTick;
 
 	protected ShieldEntity(EntityType<? extends ShieldEntity> type, Level level) {
 		super(type, level);
@@ -111,6 +117,7 @@ public abstract class ShieldEntity extends Entity {
 
 	/**
 	 * Applies an intercepted hit at its crossing point; callers must first check the blocked side with {@link #entry}.
+	 * Counts only each attack's largest hit per tick.
 	 */
 	public boolean hurtAt(ServerLevel level, DamageSource source, float amount, Vec3 point) {
 		if (this.isRemoved()) {
@@ -120,9 +127,13 @@ public abstract class ShieldEntity extends Entity {
 			this.discard();
 			return true;
 		}
+		float added = this.beyondThisTick(level.getGameTime(), source, amount);
+		if (added <= 0) {
+			return true;
+		}
 		AttackData attack = Attacks.of(source);
 		double before = this.hp();
-		double hp = ShieldRules.hpAfterHit(attack == null ? null : attack.rank(), this.rank, before, this.damageTaken(source, attack, amount));
+		double hp = ShieldRules.hpAfterHit(attack == null ? null : attack.rank(), this.rank, before, this.damageTaken(source, attack, added));
 		this.setHp(hp);
 		double taken = before - this.hp();
 		if (taken > 0) {
@@ -147,7 +158,7 @@ public abstract class ShieldEntity extends Entity {
 		if (this.projectileImpact != null) {
 			return this.hurtAt(level, source, amount, this.projectileImpact);
 		}
-		Vec3 from = Shields.origin(source);
+		Vec3 from = Shields.origin(source, this.position());
 		// Vanilla explosions don't come here (ServerExplosionMixin calls hurtAt); other blasts land nearest where they came from.
 		if (source.is(DamageTypeTags.IS_EXPLOSION)) {
 			return this.hurtAt(level, source, amount, this.nearestPoint(from == null ? this.position() : from));
@@ -246,6 +257,29 @@ public abstract class ShieldEntity extends Entity {
 
 	private void setHp(double hp) {
 		this.entityData.set(DATA_HP, (float) hp);
+	}
+
+	// Area attacks can hit several sheltered targets; count only their largest hit against the shield.
+	private float beyondThisTick(long now, DamageSource source, float amount) {
+		if (this.takenTick != now) {
+			this.takenThisTick.clear();
+			this.takenTick = now;
+		}
+		Entity from = source.getDirectEntity() != null ? source.getDirectEntity() : source.getEntity();
+		Object dealer = from != null ? from : source.sourcePositionRaw();
+		if (dealer == null) {
+			return amount;
+		}
+		HitBy attack = new HitBy(dealer, source.typeHolder());
+		float before = this.takenThisTick.getOrDefault(attack, 0.0F);
+		if (amount <= before) {
+			return 0.0F;
+		}
+		this.takenThisTick.put(attack, amount);
+		return amount - before;
+	}
+
+	private record HitBy(Object dealer, Holder<DamageType> type) {
 	}
 
 	private void catchProjectiles() {

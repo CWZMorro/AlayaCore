@@ -26,6 +26,8 @@
 			"io.github.cwzmorro.alayacore.gametest.ClashGameTests",
 			"io.github.cwzmorro.alayacore.gametest.RealityMarbleGameTests",
 			"io.github.cwzmorro.alayacore.gametest.AttackTagGameTests",
+			"io.github.cwzmorro.alayacore.gametest.DeflectionGameTests",
+			"io.github.cwzmorro.alayacore.gametest.SkillEffectsGameTests",
 			"io.github.cwzmorro.alayacore.gametest.AimGameTests",
 			"io.github.cwzmorro.alayacore.gametest.CombatGameTests",
 			"io.github.cwzmorro.alayacore.gametest.LostToVoidGameTests",

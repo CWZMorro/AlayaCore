@@ -24,6 +24,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,6 +44,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.GameType;
 
 public class CombatGameTests {
 	private static final ResourceKey<DamageType> PLAIN = ResourceKey.create(Registries.DAMAGE_TYPE, TestServants.id("plain"));
@@ -57,6 +59,9 @@ public class CombatGameTests {
 	private static final int PROTECTION_LEVEL = 4;
 	private static final EquipmentSlot[] ARMOR_SLOTS = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
 	private static final Item[] ARMOR = {Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET};
+	// Unenchanted armor, so every wear lands (no Unbreaking).
+	private static final Item[] PLAIN_ARMOR = {Items.IRON_BOOTS, Items.IRON_LEGGINGS, Items.IRON_CHESTPLATE, Items.IRON_HELMET};
+	private static final int WEAR_SECONDS = 3;
 
 	private static Holder<DamageType> type(ServerLevel level, ResourceKey<DamageType> key) {
 		return level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(key);
@@ -235,6 +240,43 @@ public class CombatGameTests {
 		target.hurtServer(level, source, SLICE);
 		check(helper, "a tick takes the share of armor and Protection its whole second would", expected, before - target.getHealth());
 		helper.succeed();
+	}
+
+	// Neither hit names an attacker, so difficulty doesn't scale them.
+	@GameTest(maxTicks = WEAR_SECONDS * CONTINUOUS_TICKS + 5)
+	public void continuousDamageWearsArmorOnceASecondByItsSecond(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		ServerPlayer continuous = wearer(helper);
+		ServerPlayer struck = wearer(helper);
+		for (int second = 0; second < WEAR_SECONDS; second++) {
+			struck.invulnerableTime = 0;
+			struck.hurtServer(level, new DamageSource(type(level, PLAIN)), SLICE * SharedConstants.TICKS_PER_SECOND);
+		}
+		for (int tick = 0; tick < WEAR_SECONDS * CONTINUOUS_TICKS; tick++) {
+			helper.runAfterDelay(tick, () -> continuous.hurtServer(level, ContinuousSource.of(level, PLAIN, null, null), SLICE));
+		}
+		helper.runAfterDelay(WEAR_SECONDS * CONTINUOUS_TICKS, () -> {
+			check(helper, "worn at all", true, continuous.getItemBySlot(EquipmentSlot.CHEST).getDamageValue() > 0);
+			for (EquipmentSlot slot : ARMOR_SLOTS) {
+				check(helper, "worn as " + WEAR_SECONDS + " hits of its second: " + slot, struck.getItemBySlot(slot).getDamageValue(),
+					continuous.getItemBySlot(slot).getDamageValue());
+			}
+			helper.succeed();
+		});
+	}
+
+	// A mock player takes no damage until it says it has loaded, nor while it hasn't chosen a servant or human.
+	private static ServerPlayer wearer(GameTestHelper helper) {
+		ServerPlayer player = join(helper);
+		player.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
+		player.setAttached(ServantStorage.CHOICE, ServantChoice.human());
+		player.setGameMode(GameType.SURVIVAL);
+		player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(BARE_HEALTH);
+		player.setHealth(BARE_HEALTH);
+		for (int i = 0; i < ARMOR_SLOTS.length; i++) {
+			player.setItemSlot(ARMOR_SLOTS[i], new ItemStack(PLAIN_ARMOR[i]));
+		}
+		return player;
 	}
 
 	@GameTest(maxTicks = CONTINUOUS_TICKS + 5)

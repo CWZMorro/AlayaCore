@@ -55,6 +55,11 @@ public abstract class Ability {
 		return this.passive;
 	}
 
+	/** Returns whether this ability opts into projectile deflection; false by default. */
+	public boolean deflects() {
+		return false;
+	}
+
 	public List<Double> defaultCooldownSeconds() {
 		return this.cooldownSeconds;
 	}

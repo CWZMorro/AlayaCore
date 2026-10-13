@@ -28,8 +28,9 @@ abstract class AttackDefenceMixin {
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;hurtArmor(Lnet/minecraft/world/damagesource/DamageSource;F)V")
 	)
 	private void alayacore$armorWear(LivingEntity victim, DamageSource source, float damage, Operation<Void> original) {
-		if (AttackDefence.wearsArmor(source)) {
-			original.call(victim, source, damage);
+		float wear = AttackDefence.wearsArmor(source) ? ContinuousSource.armorWear(victim, source, damage) : 0.0F;
+		if (wear > 0) {
+			original.call(victim, source, wear);
 		}
 	}
 

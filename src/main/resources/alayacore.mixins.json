@@ -17,6 +17,7 @@
 		"MarbleExplosionMixin",
 		"MarblePlayerTeleportMixin",
 		"MarbleTeleportMixin",
+		"MobEffectInstanceAccessor",
 		"MobMeleeMixin",
 		"PlayerAdvancementsMixin",
 		"PlayerMeleeMixin",

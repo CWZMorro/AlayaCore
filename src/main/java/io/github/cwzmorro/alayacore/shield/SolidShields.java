@@ -21,9 +21,7 @@ public final class SolidShields {
 
 	/** Returns vanilla collisions plus shield boxes solid to the mover. */
 	public static List<VoxelShape> withShields(Entity mover, AABB area, List<VoxelShape> collisions) {
-		// A shield's box can reach farther from its position than entity lookups look past an area.
-		List<ShieldEntity> shields = mover.level().getEntitiesOfClass(ShieldEntity.class, area.inflate(Shields.MAX_RADIUS),
-			shield -> shield.isAlive() && shield.blocks(mover));
+		List<ShieldEntity> shields = solidTo(mover, area);
 		if (shields.isEmpty()) {
 			return collisions;
 		}
@@ -34,6 +32,27 @@ public final class SolidShields {
 			}
 		}
 		return all;
+	}
+
+	/**
+	 * Returns whether the proposed body box overlaps a solid shield, for movement outside vanilla collision handling.
+	 */
+	public static boolean collides(Entity body, AABB box) {
+		AABB inside = box.deflate(Shapes.EPSILON);
+		for (ShieldEntity shield : solidTo(body, box)) {
+			for (AABB cell : boxes(shield, box)) {
+				if (cell.intersects(inside)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static List<ShieldEntity> solidTo(Entity body, AABB area) {
+		// A shield's box can reach farther from its position than entity lookups look past an area.
+		return body.level().getEntitiesOfClass(ShieldEntity.class, area.inflate(Shields.MAX_RADIUS),
+			shield -> shield.isAlive() && shield.blocks(body));
 	}
 
 	// Push only where the body is simulated: server for mobs/items, local client for its player.

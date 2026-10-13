@@ -1,5 +1,6 @@
 package io.github.cwzmorro.alayacore.shield;
 
+import io.github.cwzmorro.alayacore.combat.AttackOrigin;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.network.ShieldConfigPayload;
 import io.github.cwzmorro.alayacore.network.ShieldHitPayload;
@@ -41,19 +42,33 @@ public final class Shields {
 		PayloadTypeRegistry.clientboundPlay().register(ShieldHitPayload.TYPE, ShieldHitPayload.STREAM_CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ShieldConfigPayload.TYPE, ShieldConfigPayload.STREAM_CODEC);
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> syncConfig(handler.getPlayer()));
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((victim, source, amount) -> {
-			Vec3 from = origin(source);
-			// Explosions are stopped before they hurt or push anything (shelters).
-			if (from == null || source.is(DamageTypeTags.IS_EXPLOSION) || !(victim.level() instanceof ServerLevel level)) {
-				return true;
-			}
-			Hit hit = firstHit(level, from, victim.getBoundingBox().getCenter());
-			if (hit == null) {
-				return true;
-			}
-			hit.shield().hurtAt(level, source, amount, hit.entry());
+		ServerLivingEntityEvents.ALLOW_DAMAGE.register((victim, source, amount) ->
+			!(victim.level() instanceof ServerLevel level) || !intercepted(level, victim, source, amount));
+	}
+
+	/**
+	 * Hurts {@code target}, any entity, unless a shield stands between the hit and it, in which case the shield takes
+	 * it. Living targets get this check from any attacker; attacks that may also hit boats or item frames go through here.
+	 *
+	 * @return whether the target was hurt
+	 */
+	public static boolean hurt(ServerLevel level, Entity target, DamageSource source, float amount) {
+		return !intercepted(level, target, source, amount) && target.hurtServer(level, source, amount);
+	}
+
+	private static boolean intercepted(ServerLevel level, Entity victim, DamageSource source, float amount) {
+		// Explosions are stopped before they hurt or push anything (shelters).
+		if (victim instanceof ShieldEntity || source.is(DamageTypeTags.IS_EXPLOSION)) {
 			return false;
-		});
+		}
+		Vec3 centre = victim.getBoundingBox().getCenter();
+		Vec3 from = origin(source, centre);
+		Hit hit = from == null ? null : firstHit(level, from, centre);
+		if (hit == null) {
+			return false;
+		}
+		hit.shield().hurtAt(level, source, amount, hit.entry());
+		return true;
 	}
 
 	public static boolean shelters(ServerLevel level, Vec3 centre, Entity entity) {
@@ -65,13 +80,25 @@ public final class Shields {
 
 	/** Removes shielded blocks from {@code blocks} in place and returns the same list. */
 	public static List<BlockPos> unshielded(ServerLevel level, Vec3 centre, List<BlockPos> blocks) {
+		return unshielded(level, target -> centre, blocks);
+	}
+
+	public static List<BlockPos> unshielded(ServerLevel level, AttackOrigin origin, List<BlockPos> blocks) {
 		Optional<BoundingBox> reach = BoundingBox.encapsulatingPositions(blocks);
 		if (reach.isEmpty()) {
 			return blocks;
 		}
-		List<ShieldEntity> shields = shieldsAround(level, AABB.of(reach.get()).minmax(new AABB(centre, centre)));
+		AABB area = AABB.of(reach.get());
+		for (BlockPos pos : blocks) {
+			Vec3 from = origin.attackOrigin(Vec3.atCenterOf(pos));
+			area = area.minmax(new AABB(from, from));
+		}
+		List<ShieldEntity> shields = shieldsAround(level, area);
 		if (!shields.isEmpty()) {
-			blocks.removeIf(pos -> firstHit(shields, centre, Vec3.atCenterOf(pos)) != null);
+			blocks.removeIf(pos -> {
+				Vec3 centre = Vec3.atCenterOf(pos);
+				return firstHit(shields, origin.attackOrigin(centre), centre) != null;
+			});
 		}
 		return blocks;
 	}
@@ -91,8 +118,11 @@ public final class Shields {
 		}
 	}
 
-	static @Nullable Vec3 origin(DamageSource source) {
+	static @Nullable Vec3 origin(DamageSource source, Vec3 target) {
 		Entity direct = source.getDirectEntity();
+		if (direct instanceof AttackOrigin attack) {
+			return attack.attackOrigin(target);
+		}
 		if (direct != null) {
 			return lastPosition(direct).add(0, direct.getBbHeight() / 2, 0);
 		}

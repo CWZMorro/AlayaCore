@@ -28,6 +28,8 @@ final class TestAbilities {
 	static final ResourceKey<Ability> COSTLY = key("costly");
 	static final ResourceKey<Ability> PICKY = key("picky");
 
+	static final ResourceKey<Ability> DEFLECTING = key("deflecting");
+
 	static final ResourceKey<Ability> CONFIGURABLE = key("configurable");
 	static final AbilitySetting REACH = new AbilitySetting("reach", 1.0, 5.0, 0.5, 2.0);
 
@@ -56,6 +58,7 @@ final class TestAbilities {
 		Registry.register(AlayaRegistries.ABILITY, COOLDOWN, new Recorder(new Ability.Properties().cooldownSeconds(COOLDOWN_SECONDS)));
 		Registry.register(AlayaRegistries.ABILITY, COSTLY, new Costly());
 		Registry.register(AlayaRegistries.ABILITY, PICKY, new Picky());
+		Registry.register(AlayaRegistries.ABILITY, DEFLECTING, new Deflecting());
 		Registry.register(AlayaRegistries.ABILITY, CONFIGURABLE, new Configurable());
 		Registry.register(AlayaRegistries.ABILITY, RANGED, new Ranked(Rank.range(Rank.parse("E"), Rank.parse("A++"))));
 		Registry.register(AlayaRegistries.ABILITY, UNKNOWN, new Ranked(Ability.UNKNOWN_RANK));
@@ -74,6 +77,17 @@ final class TestAbilities {
 		@Override
 		public List<AbilitySetting> settings() {
 			return List.of(REACH);
+		}
+	}
+
+	private static final class Deflecting extends Recorder {
+		private Deflecting() {
+			super(new Ability.Properties());
+		}
+
+		@Override
+		public boolean deflects() {
+			return true;
 		}
 	}
 
