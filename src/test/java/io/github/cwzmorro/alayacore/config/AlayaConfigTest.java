@@ -132,11 +132,33 @@ class AlayaConfigTest {
 	}
 
 	@Test
-	void missingKeyIsAddedBack() throws IOException {
+	void missingKeyIsAddedBackWithAWarningNamingIt() throws IOException {
 		AlayaConfig.load(this.file(), CLASSES, ABILITIES);
 		this.edit("respawn_percent = 50.0\n", "");
-		assertEquals(List.of(), AlayaConfig.load(this.file(), CLASSES, ABILITIES));
+		List<String> warnings = AlayaConfig.load(this.file(), CLASSES, ABILITIES);
+		assertEquals(1, warnings.size(), warnings.toString());
+		assertTrue(warnings.getFirst().contains("mana.respawn_percent"), warnings.toString());
 		assertTrue(this.text().contains("respawn_percent = 50.0"));
+		assertEquals(List.of(), AlayaConfig.load(this.file(), CLASSES, ABILITIES));
+	}
+
+	@Test
+	void aMissingTableWarnsOnceAndItsKeysDoNot() throws IOException {
+		Files.writeString(this.file(), "[testmod]\nvolley = 30\n", StandardCharsets.UTF_8);
+		List<String> warnings = AlayaConfig.load(this.file(), CLASSES, ABILITIES);
+		assertEquals(1, warnings.stream().filter(w -> w.contains("mana ")).count(), warnings.toString());
+		assertEquals(0, warnings.stream().filter(w -> w.contains("mana.")).count(), warnings.toString());
+	}
+
+	@Test
+	void theStartingManaIsOneValueAndIsSyncZero() throws IOException {
+		AlayaConfig.load(this.file(), CLASSES, ABILITIES);
+		this.edit("start_max = 1000.0", "start_max = 2000.0");
+		assertEquals(List.of(), AlayaConfig.load(this.file(), CLASSES, ABILITIES));
+		assertEquals(2000.0, AlayaConfig.mana().startMax());
+		assertEquals(0.0, AlayaConfig.progression().sync(AlayaConfig.mana().startMax()));
+		assertEquals(1.0, AlayaConfig.progression().sync(20_000.0), 1e-9);
+		assertTrue(!this.text().contains("sync_start_mana"), this.text());
 	}
 
 	@Test

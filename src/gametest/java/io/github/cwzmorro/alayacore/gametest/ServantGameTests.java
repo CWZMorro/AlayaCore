@@ -34,6 +34,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 public class ServantGameTests {
 	private static final Map<UUID, Identifier> BECAME = new ConcurrentHashMap<>();
@@ -41,6 +42,8 @@ public class ServantGameTests {
 	static {
 		AlayaServants.BECAME_SERVANT.register((player, servant) -> BECAME.put(player.getUUID(), servant));
 	}
+
+	private static final double PUSHED_BLOCKS = 5.0;
 
 	private static ServantChoice choice(ServerPlayer player) {
 		return player.getAttachedOrCreate(ServantStorage.CHOICE);
@@ -201,5 +204,24 @@ public class ServantGameTests {
 		ServantSelection.choose(newcomer, cancel());
 		check(helper, "first-join screen can't be closed", true, choosing(newcomer));
 		helper.succeed();
+	}
+
+	@GameTest
+	public void anUndecidedPlayerIsHeldWhereTheyJoined(GameTestHelper helper) {
+		ServerPlayer player = join(helper);
+		Vec3 joined = player.position();
+		check(helper, "held after joining", true, player.getAttached(ServantStorage.FROZEN_AT) != null);
+		check(helper, "no gravity", 0.0, player.getAttributeValue(Attributes.GRAVITY));
+
+		player.setPos(joined.add(0.0, PUSHED_BLOCKS, 0.0));
+		player.setDeltaMovement(0.0, PUSHED_BLOCKS, 0.0);
+		helper.runAfterDelay(2, () -> {
+			check(helper, "put back where they joined", 0.0, player.position().distanceTo(joined));
+			check(helper, "still", 0.0, player.getDeltaMovement().length());
+			ServantSelection.choose(player, human());
+			check(helper, "released after answering", true, player.getAttached(ServantStorage.FROZEN_AT) == null);
+			check(helper, "gravity back", player.getAttributeBaseValue(Attributes.GRAVITY), player.getAttributeValue(Attributes.GRAVITY));
+			helper.succeed();
+		});
 	}
 }

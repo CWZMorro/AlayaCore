@@ -46,8 +46,8 @@ public record ManaConfig(
 	}
 
 	public static ManaConfig read(ConfigSection s) {
-		double startMax = s.number("start_max", " Max mana a new player starts with. Existing players keep theirs.",
-			DEFAULTS.startMax, 0.0, Double.MAX_VALUE);
+		double startMax = s.number("start_max", " Max mana a new player starts with, and the max mana at which sync is 0%. Existing players keep theirs.",
+			DEFAULTS.startMax, 1.0, Double.MAX_VALUE);
 		double maxCeiling = s.number("max_ceiling", " Max mana stops growing here (kills, advancements, the add command).",
 			DEFAULTS.maxCeiling, 0.0, Double.MAX_VALUE);
 		double killMultiplier = s.number("kill_max_mana_multiplier", " Killing a mob raises max mana by its max HP × this.",

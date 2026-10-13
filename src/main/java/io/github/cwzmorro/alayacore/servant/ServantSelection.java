@@ -11,6 +11,7 @@ import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
 import io.github.cwzmorro.alayacore.network.ChooseServantPayload;
 import io.github.cwzmorro.alayacore.network.OpenServantSelectionPayload;
 import io.github.cwzmorro.alayacore.progression.ClassGrades;
+import io.github.cwzmorro.alayacore.progression.Grand;
 import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.progression.TrueName;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.Holder;
@@ -31,6 +33,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Handles server-side servant selection, keeping first-join players frozen and invulnerable until they answer.
@@ -38,7 +41,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 public final class ServantSelection {
 	private static final AttributeModifier FROZEN = new AttributeModifier(
 		AlayaCore.id("choosing_servant"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-	private static final List<Holder<Attribute>> FROZEN_ATTRIBUTES = List.of(Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH);
+	private static final List<Holder<Attribute>> FROZEN_ATTRIBUTES = List.of(Attributes.MOVEMENT_SPEED, Attributes.JUMP_STRENGTH, Attributes.GRAVITY);
+	// A frozen player pushed further than this from where they were frozen is put back (squared blocks).
+	private static final double FROZEN_DRIFT_SQUARED = 1.0E-6;
 
 	private ServantSelection() {
 	}
@@ -54,6 +59,7 @@ public final class ServantSelection {
 				open(player);
 			}
 		});
+		ServerTickEvents.END_SERVER_TICK.register(server -> server.getPlayerList().getPlayers().forEach(ServantSelection::holdStill));
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) ->
 			!(entity instanceof ServerPlayer player && isUndecided(player)));
 	}
@@ -122,6 +128,10 @@ public final class ServantSelection {
 		Abilities.endAll(player);
 		Presets.clear(player);
 		AbilitySettings.clear(player);
+		TrueName.onLeftServant(player);
+		if (!AlayaServants.classId(player).equals(servant.flatMap(AlayaRegistries.SERVANT::getOptional).map(s -> s.servantClass().identifier()))) {
+			Grand.loseTitle(player);
+		}
 		MinecraftServer server = player.level().getServer();
 		Map<UUID, Identifier> owners = new HashMap<>(owners(server));
 		servant.ifPresentOrElse(id -> owners.put(player.getUUID(), id), () -> owners.remove(player.getUUID()));
@@ -146,7 +156,28 @@ public final class ServantSelection {
 		return !player.getAttachedOrElse(ServantStorage.CHOICE, ServantChoice.UNDECIDED).decided();
 	}
 
+	// Other mods can set the choice directly, so freezing must follow stored state rather than the screen.
+	private static void holdStill(ServerPlayer player) {
+		Vec3 at = player.getAttached(ServantStorage.FROZEN_AT);
+		if (at == null) {
+			return;
+		}
+		if (!isUndecided(player)) {
+			setFrozen(player, false);
+			return;
+		}
+		player.setDeltaMovement(Vec3.ZERO);
+		if (player.position().distanceToSqr(at) > FROZEN_DRIFT_SQUARED) {
+			player.connection.teleport(at.x, at.y, at.z, player.getYRot(), player.getXRot());
+		}
+	}
+
 	private static void setFrozen(ServerPlayer player, boolean frozen) {
+		if (frozen) {
+			player.setAttached(ServantStorage.FROZEN_AT, player.position());
+		} else {
+			player.removeAttached(ServantStorage.FROZEN_AT);
+		}
 		for (Holder<Attribute> attribute : FROZEN_ATTRIBUTES) {
 			AttributeInstance instance = player.getAttribute(attribute);
 			if (instance == null) {

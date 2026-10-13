@@ -44,7 +44,7 @@ final class ConfigFile {
 
 		CommentedConfig output = TomlFormat.newConfig(LinkedHashMap::new);
 		Set<UnmodifiableConfig> inlineTables = Collections.newSetFromMap(new IdentityHashMap<>());
-		reader.accept(new ConfigSection(input, output, "", warnings, inlineTables));
+		reader.accept(new ConfigSection(input, output, "", warnings, inlineTables, input != null));
 
 		String text = header + toToml(output, inlineTables);
 		if (!text.equals(existing)) {

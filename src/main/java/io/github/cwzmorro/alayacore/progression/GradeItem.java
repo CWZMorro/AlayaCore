@@ -24,6 +24,8 @@ public final class GradeItem extends Item {
 		PROMOTION, GRAND, DEMOTION
 	}
 
+	private static final int CONSUMED_PER_USE = 1;
+
 	private final Kind kind;
 
 	public GradeItem(Kind kind, Properties properties) {
@@ -48,7 +50,7 @@ public final class GradeItem extends Item {
 		}
 		serverPlayer.sendOverlayMessage(Component.translatable("item.alayacore.grade.now",
 			ClassGrades.of(serverPlayer).title(ServantClass.name(classId.get()))));
-		player.getItemInHand(hand).consume(1, player);
+		player.getItemInHand(hand).consume(CONSUMED_PER_USE, player);
 		return InteractionResult.SUCCESS_SERVER;
 	}
 

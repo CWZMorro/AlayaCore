@@ -143,11 +143,12 @@ public final class AlayaConfig {
 	 */
 	public static List<String> load(Path file, Map<Identifier, ServantClassConfig> classDefaults, Map<Identifier, List<Double>> cooldownDefaults) {
 		return ConfigFile.sync(file, HEADER, true, root -> {
+			ManaConfig mana = ManaConfig.read(root.section(MANA, null));
 			values = new Values(
-				ManaConfig.read(root.section(MANA, null)),
+				mana,
 				RankConfig.read(root.section(RANKS, null)),
 				ServantConfig.read(root.section(SERVANTS, null), root.section(CLASSES, ServantConfig.CLASSES_COMMENT), classDefaults),
-				ProgressionConfig.read(root.section(PROGRESSION, null)),
+				ProgressionConfig.read(root.section(PROGRESSION, null), mana.startMax()),
 				CombatConfig.read(root.section(COMBAT, null)),
 				AbilityConfig.read(root.section(ABILITIES, null), cooldownDefaults),
 				ClashConfig.read(root.section(CLASH, null)),

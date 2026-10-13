@@ -64,6 +64,13 @@ final class TestPlayers {
 		return player;
 	}
 
+	// An undecided player is held where it joined, so a test can't move it.
+	static ServerPlayer joinAsHuman(GameTestHelper helper) {
+		ServerPlayer player = join(helper);
+		ServantSelection.choose(player, human());
+		return player;
+	}
+
 	static ServerPlayer player(MinecraftServer server) {
 		return server.getPlayerList().getPlayers().getFirst();
 	}

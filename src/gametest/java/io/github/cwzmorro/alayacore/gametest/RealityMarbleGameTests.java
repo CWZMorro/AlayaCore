@@ -1,6 +1,6 @@
 package io.github.cwzmorro.alayacore.gametest;
 
-import static io.github.cwzmorro.alayacore.gametest.TestPlayers.join;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAsHuman;
 
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.gametest.TestMarbles.TestMarble;
@@ -49,7 +49,7 @@ public class RealityMarbleGameTests {
 	}
 
 	private static ServerPlayer caster(GameTestHelper helper, double mana) {
-		ServerPlayer player = join(helper);
+		ServerPlayer player = joinAsHuman(helper);
 		player.setGameMode(GameType.SURVIVAL);
 		AlayaMana.getOrCreate(player);
 		AlayaMana.addMax(player, mana);

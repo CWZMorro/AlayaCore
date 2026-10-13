@@ -14,6 +14,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.Vec3;
 
 /** Where servant choices are kept (Fabric data attachments). */
 public final class ServantStorage {
@@ -36,6 +37,8 @@ public final class ServantStorage {
 		.syncWith(CHOICE_STREAM_CODEC, AttachmentSyncPredicate.targetOnly()));
 
 	public static final AttachmentType<Boolean> CHOOSING = AttachmentRegistry.create(AlayaCore.id("choosing_servant"));
+
+	public static final AttachmentType<Vec3> FROZEN_AT = AttachmentRegistry.create(AlayaCore.id("frozen_at"));
 
 	// Server-wide: which player is which servant. Saved with the world and sent to every client, so the screen can show taken servants.
 	public static final AttachmentType<Map<UUID, Identifier>> OWNERS = AttachmentRegistry.create(AlayaCore.id("servant_owners"), builder -> builder

@@ -57,6 +57,11 @@ public final class TrueName {
 		deeds(player).ifPresent(deeds -> GrantedAdvancements.grant(player, deeds.branch()));
 	}
 
+	/** Hides the outgoing servant's advancement branch without clearing completed deeds. */
+	public static void onLeftServant(ServerPlayer player) {
+		deeds(player).ifPresent(deeds -> GrantedAdvancements.revoke(player, deeds.branch()));
+	}
+
 	public static boolean isRealized(ServerPlayer player) {
 		return deeds(player).map(deeds -> GrantedAdvancements.isDone(player, deeds.awakening())).orElse(false);
 	}

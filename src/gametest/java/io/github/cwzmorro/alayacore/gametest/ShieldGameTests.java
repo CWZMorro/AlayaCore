@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.gametest;
 
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.join;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAsHuman;
 
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.combat.AttackData;
@@ -105,7 +106,7 @@ public class ShieldGameTests {
 	}
 
 	private static ServerPlayer watcher(GameTestHelper helper, BlockPos pos) {
-		ServerPlayer player = join(helper);
+		ServerPlayer player = joinAsHuman(helper);
 		player.snapTo(helper.absoluteVec(Vec3.atBottomCenterOf(pos)), 0.0F, 0.0F);
 		player.setChunkTrackingView(ChunkTrackingView.of(player.chunkPosition(), TRACKING_RADIUS));
 		return player;

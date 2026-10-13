@@ -4,14 +4,13 @@ import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
 import io.github.cwzmorro.alayacore.mana.ManaData;
+import io.github.cwzmorro.alayacore.util.ServerState;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
@@ -47,7 +46,7 @@ public final class RealityMarbles {
 	private static final Set<EntitySpawnReason> NATURAL_SPAWNS = EnumSet.of(EntitySpawnReason.NATURAL,
 		EntitySpawnReason.CHUNK_GENERATION, EntitySpawnReason.STRUCTURE, EntitySpawnReason.PATROL);
 	private static final List<RealityMarbleSource> SOURCES = new ArrayList<>();
-	private static final Map<MinecraftServer, Set<UUID>> UNAVAILABLE = new WeakHashMap<>();
+	private static final ServerState<Set<UUID>> UNAVAILABLE = ServerState.create(AlayaCore.id("reality_marble_unavailable"));
 
 	private RealityMarbles() {
 	}
@@ -215,7 +214,7 @@ public final class RealityMarbles {
 		UUID caster = entity.getUUID();
 		for (RealityMarble marble : marbles(server)) {
 			if (marble.phase() != RealityMarble.Phase.CLOSING && marble.caster().getUUID().equals(caster)) {
-				server.execute(() -> UNAVAILABLE.computeIfAbsent(server, key -> new HashSet<>()).add(caster));
+				server.execute(() -> UNAVAILABLE.getOrCreate(server, key -> new HashSet<>()).add(caster));
 				return;
 			}
 		}

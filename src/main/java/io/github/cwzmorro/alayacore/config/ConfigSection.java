@@ -22,13 +22,17 @@ public final class ConfigSection {
 	private final String path;
 	private final List<String> warnings;
 	private final Set<UnmodifiableConfig> inlineTables;
+	// False when there was no file, or this whole table is missing (that is reported once).
+	private final boolean warnMissing;
 
-	ConfigSection(@Nullable UnmodifiableConfig input, CommentedConfig output, String path, List<String> warnings, Set<UnmodifiableConfig> inlineTables) {
+	ConfigSection(@Nullable UnmodifiableConfig input, CommentedConfig output, String path, List<String> warnings,
+		Set<UnmodifiableConfig> inlineTables, boolean warnMissing) {
 		this.input = input;
 		this.output = output;
 		this.path = path;
 		this.warnings = warnings;
 		this.inlineTables = inlineTables;
+		this.warnMissing = warnMissing;
 	}
 
 	/** Reads a finite number within inclusive bounds, falling back with a warning if invalid. */
@@ -110,17 +114,19 @@ public final class ConfigSection {
 	}
 
 	private ConfigSection child(String key, @Nullable String comment, boolean inline) {
-		Object raw = this.raw(key);
+		Object raw = this.lookup(key);
 		UnmodifiableConfig childInput = raw instanceof UnmodifiableConfig config ? config : null;
 		if (raw != null && childInput == null) {
 			this.warn(key, "must be a table; using defaults");
+		} else if (raw == null && this.warnMissing) {
+			this.warn(key, "is missing; using defaults");
 		}
 		CommentedConfig childOutput = this.output.createSubConfig();
 		if (inline) {
 			this.inlineTables.add(childOutput);
 		}
 		this.write(key, comment, childOutput);
-		return new ConfigSection(childInput, childOutput, this.qualified(key), this.warnings, this.inlineTables);
+		return new ConfigSection(childInput, childOutput, this.qualified(key), this.warnings, this.inlineTables, childInput != null && this.warnMissing);
 	}
 
 	private double read(String key, double fallback, double min, double max) {
@@ -137,6 +143,14 @@ public final class ConfigSection {
 	}
 
 	private @Nullable Object raw(String key) {
+		Object raw = this.lookup(key);
+		if (raw == null && this.warnMissing) {
+			this.warn(key, "is missing; using the default");
+		}
+		return raw;
+	}
+
+	private @Nullable Object lookup(String key) {
 		return this.input == null ? null : this.input.get(List.of(key));
 	}
 

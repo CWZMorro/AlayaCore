@@ -1,6 +1,7 @@
 package io.github.cwzmorro.alayacore.progression;
 
 import io.github.cwzmorro.alayacore.config.ConfigSection;
+import io.github.cwzmorro.alayacore.mana.ManaConfig;
 import io.github.cwzmorro.alayacore.servant.ServantStats;
 import io.github.cwzmorro.alayacore.util.Percent;
 
@@ -18,7 +19,7 @@ public record ProgressionConfig(
 	ServantStats demi
 ) {
 	public static final ProgressionConfig DEFAULTS = new ProgressionConfig(
-		1000.0,
+		ManaConfig.DEFAULTS.startMax(),
 		10_000.0,
 		70.0,
 		2.0,
@@ -28,14 +29,12 @@ public record ProgressionConfig(
 		new ServantStats(30.0, 2.0, 2.0, 0.0, 5.0, 0.0)
 	);
 
-	public static ProgressionConfig read(ConfigSection s) {
-		double start = s.number("sync_start_mana", " Max mana at which sync is 0%.", DEFAULTS.syncStartMana, 1.0, Double.MAX_VALUE);
+	public static ProgressionConfig read(ConfigSection s, double start) {
 		double full = s.number("sync_full_mana", " Max mana at which sync is 100%. Mana keeps growing after that; sync stays 100%.",
 			DEFAULTS.syncFullMana, 1.0, Double.MAX_VALUE);
 		if (full <= start) {
-			s.warn("sync_full_mana", "must be above sync_start_mana; using the defaults");
-			start = DEFAULTS.syncStartMana;
-			full = DEFAULTS.syncFullMana;
+			s.warn("sync_full_mana", "must be above [mana] start_max; using the default span");
+			full = start * DEFAULTS.syncFullMana / DEFAULTS.syncStartMana;
 		}
 		double bronze = s.number("bronze_sync_percent", " Class grades: sync for Bronze.", DEFAULTS.bronzeSyncPercent, 0.0, Percent.WHOLE);
 		double silver = s.number("silver_sync_percent", " Class grades: sync for Silver; Gold is Silver plus the true name.",

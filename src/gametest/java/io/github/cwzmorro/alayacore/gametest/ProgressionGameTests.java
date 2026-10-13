@@ -10,7 +10,9 @@ import static io.github.cwzmorro.alayacore.gametest.TestPlayers.done;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.human;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.join;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAs;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.release;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.revoke;
+import static io.github.cwzmorro.alayacore.gametest.TestPlayers.servant;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
@@ -127,6 +129,42 @@ public class ProgressionGameTests {
 		check(helper, "max HP with the true name share", ServantStats.between(config.demi(), classConfig(ServantClasses.ARCHER).real(),
 			config.barFill(Progression.sync(player), true)).maxHp(),
 			player.getMaxHealth());
+		helper.succeed();
+	}
+
+	private static void changeServant(GameTestHelper helper, ServerPlayer player, Identifier servant) {
+		release(helper.getLevel().getServer(), servant);
+		ServantSelection.open(player);
+		ServantSelection.choose(player, servant(servant));
+	}
+
+	@GameTest
+	public void changingServantHidesTheOldBranch(GameTestHelper helper) {
+		ServerPlayer player = joinAs(helper, TestServants.ARCHER);
+		check(helper, "branch of the servant", true, done(helper, player, ARCHER_BRANCH));
+		changeServant(helper, player, TestServants.ARCHER_TWO);
+		check(helper, "branch after changing servant", false, done(helper, player, ARCHER_BRANCH));
+		changeServant(helper, player, TestServants.ARCHER);
+		check(helper, "branch after becoming that servant again", true, done(helper, player, ARCHER_BRANCH));
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aGrandWhoChangesClassLosesTheOldClassTitle(GameTestHelper helper) {
+		helper.getLevel().getServer().globalAttachments().setAttached(Grand.DATA, GrandData.EMPTY);
+		Identifier archerGrand = ClassGrades.advancement(ServantClasses.ARCHER.identifier(), ClassGrade.GRAND);
+		ServerPlayer player = joinAs(helper, TestServants.ARCHER);
+		Grand.qualify(player);
+		check(helper, "grand", true, Grand.isGrand(player));
+
+		changeServant(helper, player, TestServants.ARCHER_TWO);
+		check(helper, "title kept within the class", true, Grand.isGrand(player));
+
+		changeServant(helper, player, TestServants.CASTER);
+		check(helper, "grand of the new class", false, Grand.isGrand(player));
+		check(helper, "old class Grand advancement", false, done(helper, player, archerGrand));
+		changeServant(helper, player, TestServants.ARCHER);
+		check(helper, "title not regained by returning", false, Grand.isGrand(player));
 		helper.succeed();
 	}
 
