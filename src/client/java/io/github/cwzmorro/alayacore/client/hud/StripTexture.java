@@ -12,6 +12,12 @@ import net.minecraft.resources.Identifier;
  * @param copies how many copies the texture holds
  */
 public record StripTexture(int size, int copies) {
+	private static final int COPIES = 4;
+
+	public StripTexture(int size) {
+		this(size, COPIES);
+	}
+
 	public void blit(GuiGraphicsExtractor graphics, Identifier texture, int x, int y, int screenPixelsPerTexel) {
 		int copy = Math.min(screenPixelsPerTexel, this.copies);
 		int copySize = this.size * copy;

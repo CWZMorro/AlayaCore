@@ -1,5 +1,9 @@
 package io.github.cwzmorro.alayacore.shield;
 
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
@@ -26,9 +30,24 @@ public interface ShieldShape {
 		return entry == null ? centre : entry;
 	}
 
-	/** A flat disc that stops attacks from the side it faces only. */
-	record Disc(double radius) implements ShieldShape {
+	/**
+	 * A shape a solid shield can have: boxes that bodies collide with as with blocks, and the way a body
+	 * the shield is moved onto is pushed out.
+	 */
+	interface Solid extends ShieldShape {
+		List<AABB> boxes(Vec3 centre, Vec3 facing, AABB area);
+
+		/** Returns the outward unit push direction on the body's current side, never into the ground. */
+		Vec3 outward(Vec3 centre, Vec3 facing, Vec3 point);
+	}
+
+	/** A flat disc that stops attacks from the side it faces only; solid, it is as thick as its box. */
+	record Disc(double radius) implements Solid {
 		private static final double THICKNESS = 0.2;
+		// Solid cells the disc is cut into, in blocks, on the world grid: fine across it, but a whole block up it, so a leaning
+		// disc makes steps of a block that nobody walks up (only jumps, as on blocks).
+		private static final double CELL = 0.25;
+		private static final double CELL_UP = 1.0;
 
 		@Override
 		public @Nullable Vec3 entry(Vec3 centre, Vec3 facing, Vec3 from, Vec3 to) {
@@ -56,8 +75,83 @@ public interface ShieldShape {
 			return centre.add(length > this.radius ? across.scale(this.radius / length) : across);
 		}
 
+		@Override
+		public List<AABB> boxes(Vec3 centre, Vec3 facing, AABB area) {
+			List<AABB> boxes = new ArrayList<>();
+			if (!this.bounds(centre, facing).inflate(THICKNESS / 2).intersects(area)) {
+				return boxes;
+			}
+			Direction.Axis depth = depthAxis(facing);
+			Direction.Axis first = depth == Direction.Axis.X ? Direction.Axis.Y : Direction.Axis.X;
+			Direction.Axis second = depth == Direction.Axis.Z ? Direction.Axis.Y : Direction.Axis.Z;
+			double facingDepth = facing.get(depth);
+			// The thickness, measured along the facing, spans this much along the depth axis; the disc this much in all.
+			double halfDepth = THICKNESS / 2 / Math.abs(facingDepth);
+			double depthReach = this.across(facingDepth) + THICKNESS / 2 * Math.abs(facingDepth);
+			double firstReach = this.across(facing.get(first));
+			double secondReach = this.across(facing.get(second));
+			double firstCell = cell(first);
+			double secondCell = cell(second);
+			double firstFrom = Math.max(area.min(first), centre.get(first) - firstReach);
+			double firstTo = Math.min(area.max(first), centre.get(first) + firstReach);
+			double secondFrom = Math.max(area.min(second), centre.get(second) - secondReach);
+			double secondTo = Math.min(area.max(second), centre.get(second) + secondReach);
+			for (int i = Mth.floor(firstFrom / firstCell); i * firstCell < firstTo; i++) {
+				double a0 = Math.max(i * firstCell, centre.get(first) - firstReach) - centre.get(first);
+				double a1 = Math.min((i + 1) * firstCell, centre.get(first) + firstReach) - centre.get(first);
+				for (int j = Mth.floor(secondFrom / secondCell); j * secondCell < secondTo; j++) {
+					double b0 = Math.max(j * secondCell, centre.get(second) - secondReach) - centre.get(second);
+					double b1 = Math.min((j + 1) * secondCell, centre.get(second) + secondReach) - centre.get(second);
+					// The cell's point nearest the disc's centre must lie on the disc.
+					double nearA = Math.clamp(0.0, a0, a1);
+					double nearB = Math.clamp(0.0, b0, b1);
+					double nearDepth = (facing.get(first) * nearA + facing.get(second) * nearB) / facingDepth;
+					if (nearA * nearA + nearB * nearB + nearDepth * nearDepth > this.radius * this.radius) {
+						continue;
+					}
+					double[] corners = {plane(facing, first, second, facingDepth, a0, b0), plane(facing, first, second, facingDepth, a0, b1),
+						plane(facing, first, second, facingDepth, a1, b0), plane(facing, first, second, facingDepth, a1, b1)};
+					double low = Math.max(Math.min(Math.min(corners[0], corners[1]), Math.min(corners[2], corners[3])) - halfDepth, -depthReach)
+						+ centre.get(depth);
+					double high = Math.min(Math.max(Math.max(corners[0], corners[1]), Math.max(corners[2], corners[3])) + halfDepth, depthReach)
+						+ centre.get(depth);
+					if (high <= area.min(depth) || low >= area.max(depth)) {
+						continue;
+					}
+					boxes.add(new AABB(
+						Vec3.ZERO.with(first, a0 + centre.get(first)).with(second, b0 + centre.get(second)).with(depth, low),
+						Vec3.ZERO.with(first, a1 + centre.get(first)).with(second, b1 + centre.get(second)).with(depth, high)));
+				}
+			}
+			return boxes;
+		}
+
+		@Override
+		public Vec3 outward(Vec3 centre, Vec3 facing, Vec3 point) {
+			Vec3 out = depthAxis(facing) == Direction.Axis.Y ? new Vec3(0, Math.signum(facing.y), 0) : new Vec3(facing.x, 0, facing.z).normalize();
+			return point.subtract(centre).dot(facing) < 0 ? out.reverse() : out;
+		}
+
 		private double across(double facingPart) {
 			return this.radius * Math.sqrt(Math.max(0.0, 1.0 - facingPart * facingPart));
+		}
+
+		private static Direction.Axis depthAxis(Vec3 facing) {
+			Direction.Axis depth = Direction.Axis.Y;
+			for (Direction.Axis axis : Direction.Axis.values()) {
+				if (Math.abs(facing.get(axis)) > Math.abs(facing.get(depth))) {
+					depth = axis;
+				}
+			}
+			return depth;
+		}
+
+		private static double plane(Vec3 facing, Direction.Axis first, Direction.Axis second, double facingDepth, double a, double b) {
+			return -(facing.get(first) * a + facing.get(second) * b) / facingDepth;
+		}
+
+		private static double cell(Direction.Axis axis) {
+			return axis == Direction.Axis.Y ? CELL_UP : CELL;
 		}
 	}
 

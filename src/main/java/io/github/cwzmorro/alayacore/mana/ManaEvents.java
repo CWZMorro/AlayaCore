@@ -47,7 +47,7 @@ public final class ManaEvents {
 		// The killer is whoever vanilla credits: the attacker, or the shooter of a projectile.
 		ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((level, killer, killed, source) -> {
 			if (!(killed instanceof Player) && killer instanceof LivingEntity living) {
-				AlayaMana.addMax(living, killed.getMaxHealth());
+				AlayaMana.addMax(living, AlayaConfig.mana().killMaxManaGain(killed.getMaxHealth()));
 			}
 		});
 

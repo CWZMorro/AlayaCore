@@ -9,7 +9,6 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementType;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -44,6 +43,7 @@ public final class TrueName {
 	}
 
 	public static void register() {
+		DeedKinds.init();
 		DynamicRegistries.register(DEEDS_KEY, TrueNameDeeds.CODEC);
 		ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((level, killer, killed, source) -> {
 			if (killer instanceof ServerPlayer player) {
@@ -82,25 +82,20 @@ public final class TrueName {
 		}
 	}
 
-	public static void onRaidWon(ServerPlayer player) {
+	/**
+	 * Completes the next deed if its kind and condition match the event. Content mods call this for their own deed kinds.
+	 */
+	public static <E> void happened(ServerPlayer player, DeedKind<?, E> kind, E event) {
 		deeds(player).flatMap(deeds -> nextDeed(player, deeds))
-			.filter(TrueNameDeeds.Deed::winRaid)
+			.filter(deed -> deed.condition().metBy(kind, event))
 			.ifPresent(deed -> GrantedAdvancements.grant(player, deed.advancement()));
 	}
 
 	private static void onKill(ServerPlayer player, LivingEntity killed) {
-		Optional<TrueNameDeeds> found = deeds(player);
-		if (found.isEmpty()) {
-			return;
-		}
-		TrueNameDeeds deeds = found.get();
-		Identifier killedType = BuiltInRegistries.ENTITY_TYPE.getKey(killed.getType());
-		nextDeed(player, deeds)
-			.filter(deed -> deed.kill().filter(killedType::equals).isPresent())
-			.ifPresent(deed -> GrantedAdvancements.grant(player, deed.advancement()));
-		if (killed.is(BOSSES) && !GrantedAdvancements.isDone(player, deeds.awakening()) && nextDeed(player, deeds).isEmpty()) {
-			GrantedAdvancements.grant(player, deeds.awakening());
-		}
+		happened(player, DeedKinds.KILL, killed);
+		deeds(player)
+			.filter(deeds -> killed.is(BOSSES) && !GrantedAdvancements.isDone(player, deeds.awakening()) && nextDeed(player, deeds).isEmpty())
+			.ifPresent(deeds -> GrantedAdvancements.grant(player, deeds.awakening()));
 	}
 
 	private static Optional<TrueNameDeeds.Deed> nextDeed(ServerPlayer player, TrueNameDeeds deeds) {

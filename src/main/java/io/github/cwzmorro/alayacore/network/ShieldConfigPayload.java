@@ -18,7 +18,9 @@ public record ShieldConfigPayload(ShieldConfig shields) implements CustomPacketP
 	public static final StreamCodec<ByteBuf, ShieldConfigPayload> STREAM_CODEC = StreamCodec.composite(
 		ByteBufCodecs.VAR_INT, payload -> payload.shields().tapSeconds(),
 		ByteBufCodecs.DOUBLE, payload -> payload.shields().holdUpkeepPerSecond(),
-		(tapSeconds, holdUpkeepPerSecond) -> new ShieldConfigPayload(new ShieldConfig(tapSeconds, holdUpkeepPerSecond))
+		ByteBufCodecs.DOUBLE, payload -> payload.shields().projectileReach(),
+		(tapSeconds, holdUpkeepPerSecond, projectileReach) -> new ShieldConfigPayload(new ShieldConfig(tapSeconds, holdUpkeepPerSecond,
+			projectileReach))
 	);
 
 	@Override

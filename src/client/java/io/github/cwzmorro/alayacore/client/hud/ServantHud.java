@@ -49,7 +49,7 @@ public final class ServantHud {
 	private static final float PORTRAIT_BODY_TURN = 20.0F;
 	private static final int BADGE_DIAMOND = 32;
 	// Every grade sits on the same 38 texel canvas, its diamond BADGE_DIAMOND wide.
-	private static final StripTexture BADGE = new StripTexture(38, 4);
+	private static final StripTexture BADGE = new StripTexture(38);
 	private static final int PORTRAIT_X = MARGIN + BADGE_DIAMOND / 2 - GOLD_LINE;
 	private static final int PORTRAIT_Y = MARGIN;
 
@@ -152,15 +152,21 @@ public final class ServantHud {
 		float health = player.getHealth();
 		float maxHealth = player.getMaxHealth();
 		bar(graphics, HEALTH_BAR, HEALTH_BAR_FILL, x, y, HEALTH_WIDTH, HEALTH_HEIGHT, maxHealth > 0 ? health / maxHealth : 0);
-		centered(graphics, font, Component.literal(String.format(Locale.ROOT, "%.1f | %.1f", health, maxHealth)), x, y, HEALTH_WIDTH, HEALTH_HEIGHT);
+		centered(graphics, font, Component.translatable("alayacore.hud.health", tenths(health), tenths(maxHealth)), x, y, HEALTH_WIDTH,
+			HEALTH_HEIGHT);
 
 		ManaData mana = AlayaMana.get(player);
 		if (mana != null) {
 			y += HEALTH_HEIGHT;
 			double fraction = ManaRules.fraction(mana);
 			bar(graphics, MANA_BAR, MANA_BAR_FILL, x, y, MANA_WIDTH, MANA_HEIGHT, fraction);
-			centered(graphics, font, Component.literal(Math.round(Percent.fromFraction(fraction)) + "%"), x, y, MANA_WIDTH, MANA_HEIGHT);
+			centered(graphics, font, Component.translatable("alayacore.hud.mana", Math.round(Percent.fromFraction(fraction))), x, y, MANA_WIDTH,
+				MANA_HEIGHT);
 		}
+	}
+
+	private static String tenths(float hp) {
+		return String.format(Locale.ROOT, "%.1f", hp);
 	}
 
 	private static void bar(GuiGraphicsExtractor graphics, Identifier background, Identifier fill, int x, int y, int width, int height, double ratio) {

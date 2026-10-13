@@ -42,7 +42,6 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 public final class ServantSelectionScreen extends Screen {
-	private static final Identifier WINDOW = AlayaCore.id("panel");
 	private static final Identifier HEADER = AlayaCore.id("servant_select/header");
 	private static final Identifier BADGE = AlayaCore.id("servant_select/badge");
 	private static final Identifier TEXT_PANEL = AlayaCore.id("servant_select/text_panel");
@@ -66,7 +65,7 @@ public final class ServantSelectionScreen extends Screen {
 	public static final int HEADER_GAP = 4;
 	private static final int HEADER_BORDER = 3;
 	private static final int BADGE_SIZE = 24;
-	private static final StripTexture ICON = new StripTexture(16, 4);
+	private static final StripTexture ICON = new StripTexture(16);
 	private static final int ICON_OFFSET = (BADGE_SIZE - ICON.size()) / 2;
 	private static final int HEADER_TEXT_GAP = 6;
 	private static final int HEADER_MAX_LINES = 2;
@@ -428,7 +427,7 @@ public final class ServantSelectionScreen extends Screen {
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
 		super.extractBackground(graphics, mouseX, mouseY, a);
-		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, WINDOW, this.left, this.top, WINDOW_WIDTH, this.windowHeight());
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, GuiSprites.PANEL, this.left, this.top, WINDOW_WIDTH, this.windowHeight());
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HEADER, this.panelX(), this.top + WINDOW_PADDING, panelWidth(), HEADER_HEIGHT);
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BADGE, this.badgeX(), this.badgeY(), BADGE_SIZE, BADGE_SIZE);
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, TEXT_PANEL, this.panelX(), this.panelY(), panelWidth(), this.panelHeight());

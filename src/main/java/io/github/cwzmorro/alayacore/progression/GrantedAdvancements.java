@@ -1,10 +1,14 @@
 package io.github.cwzmorro.alayacore.progression;
 
 import io.github.cwzmorro.alayacore.AlayaCore;
+import io.github.cwzmorro.alayacore.mixin.AdvancementAccessor;
+import io.github.cwzmorro.alayacore.mixin.DisplayInfoAccessor;
+import java.util.Optional;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.advancements.criterion.ImpossibleTrigger;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +35,13 @@ final class GrantedAdvancements {
 
 	static void revoke(ServerPlayer player, Identifier advancement) {
 		forEachCriterion(player, advancement, PlayerAdvancements::revoke);
+	}
+
+	static void describe(Advancement advancement, Component description) {
+		advancement.display().ifPresent(display -> {
+			((DisplayInfoAccessor) display).alayacore$setDescription(description);
+			((AdvancementAccessor) (Object) advancement).alayacore$setName(Optional.of(AdvancementAccessor.alayacore$decorateName(display)));
+		});
 	}
 
 	private interface CriterionChange {

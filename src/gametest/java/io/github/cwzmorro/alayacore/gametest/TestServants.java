@@ -26,6 +26,7 @@ public final class TestServants implements ModInitializer {
 	public static final Identifier DIVINE = id("divine");
 	static final int DIVINE_MAX = 5;
 	public static final Identifier RANKED = id("ranked");
+	public static final Identifier LEGEND = id("legend");
 	// Classes without servants force the contents list onto a second page.
 	private static final List<String> EXTRA_CLASSES = List.of("avenger", "alter_ego", "foreigner", "moon_cancer", "beast", "pretender",
 		"test_class_1", "test_class_2", "test_class_3", "test_class_4", "test_class_5", "test_class_6", "test_class_7", "test_class_8");
@@ -39,6 +40,8 @@ public final class TestServants implements ModInitializer {
 	public void onInitialize() {
 		TestAbilities.register();
 		TestShields.init();
+		TestMarbles.register();
+		TestDeeds.init();
 		for (Identifier id : new Identifier[]{SOLO, CONTESTED, OLD, NEW, IGNORED, FORCED, ANNOUNCED}) {
 			Registry.register(AlayaRegistries.SERVANT, id, new Servant(ServantClasses.SABER, List.of()));
 		}
@@ -50,6 +53,7 @@ public final class TestServants implements ModInitializer {
 		Registry.register(AlayaRegistries.SERVANT, CASTER, new Servant(ServantClasses.SABER, List.of(TestAbilities.RECORDER,
 			TestAbilities.EXCLUSIVE, TestAbilities.NOBLE_PHANTASM, TestAbilities.COOLDOWN, TestAbilities.COSTLY, TestAbilities.PICKY,
 			TestAbilities.CONFIGURABLE)));
+		Registry.register(AlayaRegistries.SERVANT, LEGEND, new Servant(ServantClasses.SABER, List.of()));
 		// After the servants above, which load Alaya Core's own classes, so these come after them.
 		for (String name : EXTRA_CLASSES) {
 			Registry.register(AlayaRegistries.SERVANT_CLASS, id(name), new ServantClass(EXTRA_CLASS_VALUES));

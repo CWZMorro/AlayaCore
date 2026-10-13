@@ -4,14 +4,22 @@
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
 		"AbilityTickMixin",
+		"AdvancementAccessor",
+		"AdvancementLoadMixin",
 		"CakeBlockMixin",
+		"DisplayInfoAccessor",
 		"FoodPropertiesMixin",
+		"MarbleBlockItemMixin",
+		"MarbleExplosionMixin",
+		"MarblePlayerTeleportMixin",
+		"MarbleTeleportMixin",
 		"PlayerAdvancementsMixin",
 		"ProjectileInvoker",
 		"RaidWinTriggerMixin",
 		"ServantProtectionMixin",
 		"ServerExplosionMixin",
-		"ServerLevelMixin"
+		"ServerLevelMixin",
+		"ShieldCollisionMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

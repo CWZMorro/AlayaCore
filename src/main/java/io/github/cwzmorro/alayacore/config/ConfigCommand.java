@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.config;
 
 import com.mojang.brigadier.Command;
 import io.github.cwzmorro.alayacore.AlayaCore;
+import io.github.cwzmorro.alayacore.progression.ClassGrades;
 import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.shield.Shields;
 import java.util.List;
@@ -22,6 +23,7 @@ public final class ConfigCommand {
 					.then(Commands.literal("reload").executes(context -> {
 						List<String> warnings = AlayaConfig.load();
 						Progression.refreshAll(context.getSource().getServer());
+						ClassGrades.describe(context.getSource().getServer().getAdvancements());
 						context.getSource().getServer().getPlayerList().getPlayers().forEach(Shields::syncConfig);
 						Component message = warnings.isEmpty()
 							? Component.translatable("commands.alayacore.config.reload.success")

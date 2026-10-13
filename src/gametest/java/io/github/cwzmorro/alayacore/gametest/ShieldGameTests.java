@@ -9,6 +9,7 @@ import io.github.cwzmorro.alayacore.combat.Attacks;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.network.ShieldHitPayload;
 import io.github.cwzmorro.alayacore.rank.Rank;
+import io.github.cwzmorro.alayacore.shield.ClientShieldEvents;
 import io.github.cwzmorro.alayacore.shield.ShieldEntity;
 import io.github.cwzmorro.alayacore.shield.Shields;
 import io.netty.buffer.ByteBuf;
@@ -32,6 +33,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.monster.zombie.Husk;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.item.ItemStack;
@@ -61,6 +63,9 @@ public class ShieldGameTests {
 	// Mock clients send no chunk acknowledgements: the chunks this near them are marked tracked, and tracking starts within the ticks after.
 	private static final int TRACKING_RADIUS = 2;
 	private static final int TRACKING_TICKS = 10;
+	private static final Vec3 THROUGH = new Vec3(0, 0, -4);
+	private static final double OVERLAP = 0.1;
+	private static final int PUSH_TICKS = 5;
 
 	private static <T extends ShieldEntity> T shield(GameTestHelper helper, EntityType<T> type, Rank rank) {
 		T shield = helper.spawn(type, SHIELD);
@@ -329,6 +334,59 @@ public class ShieldGameTests {
 			check(helper, "no HP taken, nothing sent", 1, hitsOn(firstHits, shield).size());
 			helper.succeed();
 		});
+	}
+
+	@GameTest
+	public void aSolidShieldStopsEveryBodyButItsCaster(GameTestHelper helper) {
+		TestShields.TestShield solid = shield(helper, TestShields.SOLID_DISC, RANK);
+		Husk walker = mob(helper, IN_FRONT);
+		Husk caster = mob(helper, IN_FRONT.east());
+		solid.caster = caster.getUUID();
+		walker.move(MoverType.SELF, THROUGH);
+		caster.move(MoverType.SELF, THROUGH);
+		double plane = helper.absoluteVec(SHIELD).z;
+		check(helper, "a body stops in front of it", true, walker.getBoundingBox().minZ > plane);
+		check(helper, "its caster passes", true, caster.getBoundingBox().maxZ < plane);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aShieldNotDeclaredSolidStopsNoBody(GameTestHelper helper) {
+		shield(helper, TestShields.DISC, RANK);
+		Husk walker = mob(helper, IN_FRONT);
+		walker.move(MoverType.SELF, THROUGH);
+		check(helper, "a body passes", true, walker.getBoundingBox().maxZ < helper.absoluteVec(SHIELD).z);
+		helper.succeed();
+	}
+
+	@GameTest(maxTicks = PUSH_TICKS + 1)
+	public void aSolidShieldPushesOutABodyItIsMovedOntoButNotItsCaster(GameTestHelper helper) {
+		TestShields.TestShield solid = shield(helper, TestShields.SOLID_DISC, RANK);
+		Vec3 centre = helper.absoluteVec(SHIELD);
+		Husk body = mob(helper, IN_FRONT);
+		body.snapTo(new Vec3(centre.x, body.getY(), centre.z + OVERLAP));
+		Husk caster = mob(helper, IN_FRONT.east());
+		Vec3 casterAt = new Vec3(caster.getX(), caster.getY(), centre.z + OVERLAP);
+		caster.snapTo(casterAt);
+		solid.caster = caster.getUUID();
+		double floor = body.getY();
+		helper.runAfterDelay(PUSH_TICKS, () -> {
+			check(helper, "pushed out to the side it was on", true, body.getBoundingBox().minZ > centre.z);
+			check(helper, "pushed along the ground", floor, body.getY());
+			check(helper, "its caster is not pushed", casterAt, caster.position());
+			helper.succeed();
+		});
+	}
+
+	@GameTest
+	public void eachShieldTypeHasItsOwnHitLook(GameTestHelper helper) {
+		TestShields.TestShield disc = helper.spawn(TestShields.DISC, SHIELD);
+		TestShields.TestShield dome = helper.spawn(TestShields.DOME, SHIELD);
+		ClientShieldEvents.HIT.invoker().onHit(disc, disc.position(), HIT);
+		ClientShieldEvents.HIT.invoker().onHit(dome, dome.position(), HIT);
+		check(helper, "the disc's look drew its hit", 1, disc.looks);
+		check(helper, "no other type's hit reached it", 0, dome.looks);
+		helper.succeed();
 	}
 
 	@GameTest

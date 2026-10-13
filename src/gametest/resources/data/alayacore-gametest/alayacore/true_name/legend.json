@@ -1,0 +1,14 @@
+{
+	"branch": "alayacore-gametest:legend/root",
+	"deeds": [
+		{
+			"advancement": "alayacore-gametest:legend/say",
+			"alayacore-gametest:say": "hello"
+		},
+		{
+			"advancement": "alayacore-gametest:legend/kill_skeleton",
+			"kill": "#minecraft:skeletons"
+		}
+	],
+	"awakening": "alayacore-gametest:legend/true_name"
+}

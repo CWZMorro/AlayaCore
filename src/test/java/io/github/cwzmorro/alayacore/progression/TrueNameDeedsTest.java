@@ -1,28 +1,13 @@
 package io.github.cwzmorro.alayacore.progression;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import java.util.Optional;
-import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
 
+// The deed kinds are a game registry, so reading a deed's condition is checked in ProgressionGameTests.
 class TrueNameDeedsTest {
-	@Test
-	void readsTheDataFormat() {
-		String json = """
-			{"branch": "fatecraft:gilgamesh/root",
-			 "deeds": [{"advancement": "fatecraft:gilgamesh/humbaba", "kill": "minecraft:warden"},
-			           {"advancement": "fatecraft:gilgamesh/bull_of_heaven", "win_raid": true}],
-			 "awakening": "fatecraft:gilgamesh/true_name"}""";
-		TrueNameDeeds deeds = TrueNameDeeds.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)).getOrThrow();
-		assertEquals(2, deeds.deeds().size());
-		assertEquals(Optional.of(Identifier.withDefaultNamespace("warden")), deeds.deeds().getFirst().kill());
-		assertTrue(deeds.deeds().get(1).winRaid());
-	}
-
 	@Test
 	void aDeedNeedsExactlyOneCondition() {
 		String json = """

@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -29,11 +30,13 @@ public final class AbilityKeys {
 	private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(AlayaCore.id("abilities"));
 	// Key names: quick-cast {@code <prefix><ability namespace>.<ability path>.<mode>}, slot {@code <prefix><slot number>} from 1.
 	private static final String QUICK_CAST_PREFIX = "key.alayacore.quick_cast.";
+	private static final String SLOT_PREFIX = "key.alayacore.slot_";
+	private static final List<Integer> DEFAULT_SLOT_KEYS = List.of(InputConstants.KEY_Z, InputConstants.KEY_X, InputConstants.KEY_C);
 
-	private static final List<KeyMapping> SLOTS = List.of(
-		new KeyMapping("key.alayacore.slot_1", InputConstants.KEY_Z, CATEGORY),
-		new KeyMapping("key.alayacore.slot_2", InputConstants.KEY_X, CATEGORY),
-		new KeyMapping("key.alayacore.slot_3", InputConstants.KEY_C, CATEGORY));
+	private static final List<KeyMapping> SLOTS = IntStream.range(0, AbilityPresets.SLOTS)
+		.mapToObj(slot -> new KeyMapping(SLOT_PREFIX + (slot + 1),
+			slot < DEFAULT_SLOT_KEYS.size() ? DEFAULT_SLOT_KEYS.get(slot) : InputConstants.UNKNOWN.getValue(), CATEGORY))
+		.toList();
 	private static final KeyMapping NEXT_MODE = new KeyMapping("key.alayacore.next_mode", InputConstants.KEY_LALT, CATEGORY);
 	private static final KeyMapping PREVIOUS_MODE = new KeyMapping("key.alayacore.previous_mode", InputConstants.UNKNOWN.getValue(), CATEGORY);
 	private static final KeyMapping PRESET_SCREEN = new KeyMapping("key.alayacore.presets", InputConstants.KEY_B, CATEGORY);
@@ -71,6 +74,15 @@ public final class AbilityKeys {
 				? Component.translatable("key.alayacore.quick_cast", name, Ability.modeName(quickCast.ability, quickCast.mode))
 				: name;
 		});
+	}
+
+	public static Optional<Component> slotName(String key) {
+		for (int slot = 0; slot < SLOTS.size(); slot++) {
+			if (SLOTS.get(slot).getName().equals(key)) {
+				return Optional.of(Component.translatable("key.alayacore.slot", slot + 1));
+			}
+		}
+		return Optional.empty();
 	}
 
 	public static Optional<KeyMapping> quickCastKey(Identifier ability, int mode) {

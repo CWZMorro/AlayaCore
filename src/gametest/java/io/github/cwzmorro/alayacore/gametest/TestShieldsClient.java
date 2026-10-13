@@ -8,6 +8,7 @@ public final class TestShieldsClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EntityRenderers.register(TestShields.DISC, NoopRenderer::new);
+		EntityRenderers.register(TestShields.SOLID_DISC, NoopRenderer::new);
 		EntityRenderers.register(TestShields.DOME, NoopRenderer::new);
 	}
 }

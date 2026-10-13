@@ -9,6 +9,7 @@ import io.github.cwzmorro.alayacore.network.ShieldHitPayload;
 import io.github.cwzmorro.alayacore.rank.Rank;
 import io.github.cwzmorro.alayacore.rank.RankConfig;
 import io.github.cwzmorro.alayacore.rank.RankLetter;
+import java.util.UUID;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -38,8 +39,6 @@ import org.jspecify.annotations.Nullable;
 public abstract class ShieldEntity extends Entity {
 	private static final EntityDataAccessor<Float> DATA_HP = SynchedEntityData.defineId(ShieldEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> DATA_MAX_HP = SynchedEntityData.defineId(ShieldEntity.class, EntityDataSerializers.FLOAT);
-	// Farthest a projectile moves in one tick that a shield still catches, in blocks.
-	private static final double PROJECTILE_REACH = 8.0;
 
 	private Rank rank = new Rank(RankLetter.E, 0);
 	private long expiresAt;
@@ -92,6 +91,14 @@ public abstract class ShieldEntity extends Entity {
 
 	public long ticksLeft() {
 		return Math.max(0L, this.expiresAt - this.level().getGameTime());
+	}
+
+	/**
+	 * Returns whether a body collides with this solid shield, excluding its caster, shields, projectiles and spectators.
+	 */
+	public final boolean blocks(Entity body) {
+		return this.solid() && !(body instanceof ShieldEntity) && !(body instanceof Projectile) && !body.isSpectator()
+			&& !body.getUUID().equals(this.casterUuid());
 	}
 
 	public @Nullable Vec3 entry(Vec3 from, Vec3 to) {
@@ -167,14 +174,16 @@ public abstract class ShieldEntity extends Entity {
 	public void tick() {
 		super.tick();
 		this.fitBox();
-		if (this.level().isClientSide()) {
-			return;
+		if (!this.level().isClientSide()) {
+			if (this.ticksLeft() == 0) {
+				this.discard();
+				return;
+			}
+			this.catchProjectiles();
 		}
-		if (this.ticksLeft() == 0) {
-			this.discard();
-			return;
+		if (this.solid() && !this.isRemoved()) {
+			SolidShields.pushOut(this);
 		}
-		this.catchProjectiles();
 	}
 
 	@Override
@@ -190,6 +199,17 @@ public abstract class ShieldEntity extends Entity {
 	@Override
 	public boolean canBeHitByProjectile() {
 		return false;
+	}
+
+	/**
+	 * Returns whether bodies collide with this shield; false by default. Requires a {@link ShieldShape.Solid} shape.
+	 */
+	protected boolean solid() {
+		return false;
+	}
+
+	protected @Nullable UUID casterUuid() {
+		return null;
 	}
 
 	protected double maxHpFor(Rank rank) {
@@ -211,9 +231,17 @@ public abstract class ShieldEntity extends Entity {
 	protected void onHit(DamageSource source, @Nullable AttackData attack, Vec3 point, double hpTaken) {
 	}
 
-	/** Fits the box to the current shape and facing; moving shields call this after following their holder. */
+	/**
+	 * Fits the box to the current shape and facing; moving shields call this after following their holder.
+	 *
+	 * @throws IllegalStateException if the shape reaches farther than {@link Shields#MAX_RADIUS}, past what the shield lookups cover
+	 */
 	protected final void fitBox() {
-		this.setBoundingBox(this.shape().bounds(this.position(), this.getLookAngle()));
+		ShieldShape shape = this.shape();
+		if (shape.radius() > Shields.MAX_RADIUS) {
+			throw new IllegalStateException("shield shape radius " + shape.radius() + " is above Shields.MAX_RADIUS " + Shields.MAX_RADIUS);
+		}
+		this.setBoundingBox(shape.bounds(this.position(), this.getLookAngle()));
 	}
 
 	private void setHp(double hp) {
@@ -221,7 +249,7 @@ public abstract class ShieldEntity extends Entity {
 	}
 
 	private void catchProjectiles() {
-		AABB reach = this.getBoundingBox().inflate(PROJECTILE_REACH);
+		AABB reach = this.getBoundingBox().inflate(AlayaConfig.shields().projectileReach());
 		for (Projectile projectile : this.level().getEntitiesOfClass(Projectile.class, reach, Entity::isAlive)) {
 			Vec3 now = projectile.position();
 			Vec3 crossing = this.entry(Shields.lastPosition(projectile), now);

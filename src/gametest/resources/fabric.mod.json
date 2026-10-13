@@ -20,7 +20,9 @@
 			"io.github.cwzmorro.alayacore.gametest.AbilitySettingGameTests",
 			"io.github.cwzmorro.alayacore.gametest.DivinityGameTests",
 			"io.github.cwzmorro.alayacore.gametest.ShieldGameTests",
-			"io.github.cwzmorro.alayacore.gametest.ClashGameTests"
+			"io.github.cwzmorro.alayacore.gametest.ClashGameTests",
+			"io.github.cwzmorro.alayacore.gametest.RealityMarbleGameTests",
+			"io.github.cwzmorro.alayacore.gametest.AttackTagGameTests"
 		],
 		"fabric-client-gametest": [
 			"io.github.cwzmorro.alayacore.gametest.ServantScreenClientTest",

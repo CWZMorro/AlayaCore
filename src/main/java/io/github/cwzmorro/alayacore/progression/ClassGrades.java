@@ -1,7 +1,9 @@
 package io.github.cwzmorro.alayacore.progression;
 
 import io.github.cwzmorro.alayacore.AlayaCore;
+import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
+import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.servant.ServantClass;
 import io.github.cwzmorro.alayacore.util.Percent;
 import java.util.ArrayList;
@@ -11,12 +13,14 @@ import java.util.function.Function;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.ServerAdvancementManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStackTemplate;
 
@@ -48,7 +52,7 @@ public final class ClassGrades {
 	}
 
 	/**
-	 * Generates a class's grade chain under {@code root}, its descriptions baked in with the config's default sync.
+	 * Generates a class's grade chain under {@code root}; {@link #describe} fills config-backed descriptions at load time.
 	 */
 	public static List<AdvancementHolder> chain(AdvancementHolder root, Identifier classId, Function<ClassGrade, ItemStackTemplate> icon) {
 		List<AdvancementHolder> chain = new ArrayList<>();
@@ -57,11 +61,32 @@ public final class ClassGrades {
 		for (ClassGrade grade : ClassGrade.values()) {
 			parent = GrantedAdvancements.impossible(Advancement.Builder.advancement()
 				.parent(parent)
-				.display(icon.apply(grade), grade.title(className), grade.description(className, Percent.fromFraction(ProgressionConfig.DEFAULTS.syncFor(grade))), null, grade.frame(), true, true, grade.hidden()))
+				.display(icon.apply(grade), grade.title(className), grade.description(className), null, grade.frame(), true, true, grade.hidden()))
 				.build(advancement(classId, grade));
 			chain.add(parent);
 		}
 		return chain;
+	}
+
+	public static void register() {
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> describe(server.getAdvancements()));
+	}
+
+	/**
+	 * Updates grade descriptions from the live config; clients see changes on their next full advancement update.
+	 */
+	public static void describe(ServerAdvancementManager advancements) {
+		ProgressionConfig config = AlayaConfig.progression();
+		for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
+			Identifier classId = AlayaRegistries.SERVANT_CLASS.getKey(servantClass);
+			Component className = ServantClass.name(classId);
+			for (ClassGrade grade : ClassGrade.values()) {
+				AdvancementHolder holder = advancements.get(advancement(classId, grade));
+				if (holder != null) {
+					GrantedAdvancements.describe(holder.value(), grade.description(className, Percent.fromFraction(config.syncFor(grade))));
+				}
+			}
+		}
 	}
 
 	public static void onBecameServant(ServerPlayer player) {

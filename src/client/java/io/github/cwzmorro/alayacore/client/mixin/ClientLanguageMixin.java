@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ClientLanguage.class)
 abstract class ClientLanguageMixin {
 	@Inject(method = "getOrDefault", at = @At("HEAD"), cancellable = true)
-	private void alayacore$quickCastName(String key, String defaultValue, CallbackInfoReturnable<String> cir) {
-		AbilityKeys.quickCastName(key).ifPresent(name -> cir.setReturnValue(name.getString()));
+	private void alayacore$keyName(String key, String defaultValue, CallbackInfoReturnable<String> cir) {
+		AbilityKeys.slotName(key).or(() -> AbilityKeys.quickCastName(key)).ifPresent(name -> cir.setReturnValue(name.getString()));
 	}
 }

@@ -1,7 +1,6 @@
 package io.github.cwzmorro.alayacore.client.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.ability.Abilities;
 import io.github.cwzmorro.alayacore.ability.Ability;
 import io.github.cwzmorro.alayacore.ability.AbilityPresets;
@@ -41,9 +40,6 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 public final class PresetScreen extends Screen {
-	private static final Identifier PANEL = AlayaCore.id("panel");
-	private static final Identifier INSET = AlayaCore.id("inset");
-
 	private static final Component LABEL_ABILITIES = Component.translatable("alayacore.screen.presets.abilities");
 	private static final Component LABEL_QUICK_CAST = Component.translatable("alayacore.screen.presets.quick_cast");
 	private static final Component LABEL_SELECT_ABILITY = Component.translatable("alayacore.screen.presets.select_ability");
@@ -338,7 +334,7 @@ public final class PresetScreen extends Screen {
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
 		super.extractBackground(graphics, mouseX, mouseY, a);
-		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, PANEL, this.left, this.top, WIDTH, this.panelHeight());
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, GuiSprites.PANEL, this.left, this.top, WIDTH, this.panelHeight());
 		if (!this.settingsOpen) {
 			SideTabs.extractSettingsTab(graphics, this.settingsTab(), this.minecraft.getWindow().getGuiScale());
 		}
@@ -356,7 +352,7 @@ public final class PresetScreen extends Screen {
 			int y = this.top + LIST_Y + row * ROW_HEIGHT;
 			boolean isSelected = id.equals(this.selected);
 			if (isSelected) {
-				graphics.blitSprite(RenderPipelines.GUI_TEXTURED, INSET, listX, y, LIST_WIDTH, ROW_HEIGHT);
+				graphics.blitSprite(RenderPipelines.GUI_TEXTURED, GuiSprites.INSET, listX, y, LIST_WIDTH, ROW_HEIGHT);
 			} else if (row == hoveredRow) {
 				graphics.fill(listX, y, listX + LIST_WIDTH, y + ROW_HEIGHT, HOVER);
 			}
@@ -384,7 +380,7 @@ public final class PresetScreen extends Screen {
 				continue;
 			}
 			KeyBox.extract(graphics, this.font, this.left + RIGHT_X, y + (SLOT_BOX_HEIGHT - KeyBox.SIZE) / 2, AbilityKeys.slotKeyName(slot), 1.0F);
-			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, INSET, this.left + SLOT_BOX_X, y, SLOT_BOX_WIDTH, SLOT_BOX_HEIGHT);
+			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, GuiSprites.INSET, this.left + SLOT_BOX_X, y, SLOT_BOX_WIDTH, SLOT_BOX_HEIGHT);
 			Optional<AbilityPresets.Slot> filled = presets.slot(presets.active(), slot);
 			int textX = this.left + SLOT_BOX_X + TEXT_INSET;
 			if (filled.isPresent()) {
@@ -414,7 +410,7 @@ public final class PresetScreen extends Screen {
 		this.extractDescription(graphics);
 		ScreenRectangle area = this.settingsArea;
 		if (area != null) {
-			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, PANEL, area.left(), area.top(), area.width(), area.height());
+			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, GuiSprites.PANEL, area.left(), area.top(), area.width(), area.height());
 		}
 		super.extractRenderState(graphics, mouseX, mouseY, a);
 		if (area != null) {
@@ -444,7 +440,7 @@ public final class PresetScreen extends Screen {
 		int boxY = this.top + DESCRIPTION_Y;
 		int boxHeight = this.descriptionHeight();
 		graphics.text(this.font, LABEL_DESCRIPTION, boxX, this.top + DESCRIPTION_LABEL_Y, SUBTEXT, false);
-		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, INSET, boxX, boxY, DESCRIPTION_WIDTH, boxHeight);
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, GuiSprites.INSET, boxX, boxY, DESCRIPTION_WIDTH, boxHeight);
 		for (int row = 0; row < this.descriptionLines && this.descriptionScroll + row < this.description.size(); row++) {
 			graphics.text(this.font, this.description.get(this.descriptionScroll + row), boxX + DESCRIPTION_PADDING,
 				boxY + DESCRIPTION_PADDING + row * (this.font.lineHeight + DESCRIPTION_LINE_SPACING), SLOT_TEXT, true);

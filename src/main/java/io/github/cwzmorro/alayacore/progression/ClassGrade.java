@@ -41,7 +41,14 @@ public enum ClassGrade {
 	}
 
 	public Component description(Component className, double syncPercent) {
-		return Component.translatable("advancements.alayacore.grade." + this.key() + ".description", className,
-			BigDecimal.valueOf(syncPercent).stripTrailingZeros().toPlainString());
+		return Component.translatable(this.descriptionKey(), className, BigDecimal.valueOf(syncPercent).stripTrailingZeros().toPlainString());
+	}
+
+	public Component description(Component className) {
+		return Component.translatable(this.descriptionKey(), className);
+	}
+
+	private String descriptionKey() {
+		return "advancements.alayacore.grade." + this.key() + ".description";
 	}
 }

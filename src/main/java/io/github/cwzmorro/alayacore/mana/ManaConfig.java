@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
  */
 public record ManaConfig(
 	double startMax,
+	double killMaxManaMultiplier,
 	double regenPerSecond,
 	double foodPercentPerHungerPoint,
 	double sleepPercent,
@@ -24,6 +25,7 @@ public record ManaConfig(
 ) {
 	public static final ManaConfig DEFAULTS = new ManaConfig(
 		1000.0,
+		1.0,
 		3.0,
 		0.25,
 		20.0,
@@ -44,6 +46,8 @@ public record ManaConfig(
 	public static ManaConfig read(ConfigSection s) {
 		double startMax = s.number("start_max", " Max mana a new player starts with. Existing players keep theirs.",
 			DEFAULTS.startMax, 0.0, Double.MAX_VALUE);
+		double killMultiplier = s.number("kill_max_mana_multiplier", " Killing a mob raises max mana by its max HP × this.",
+			DEFAULTS.killMaxManaMultiplier, 0.0, Double.MAX_VALUE);
 		double regenPerSecond = s.number("regen_per_second", " Flat regeneration, mana per second.",
 			DEFAULTS.regenPerSecond, 0.0, Double.MAX_VALUE);
 		double foodPercent = s.number("food_percent_per_hunger_point", " Eating: percent of max mana per hunger point the food restores.",
@@ -68,12 +72,16 @@ public record ManaConfig(
 			maxBonus = DEFAULTS.challengeMaxBonus;
 		}
 
-		return new ManaConfig(startMax, regenPerSecond, foodPercent, sleepPercent, respawnPercent,
+		return new ManaConfig(startMax, killMultiplier, regenPerSecond, foodPercent, sleepPercent, respawnPercent,
 			sweetFoodPercent, xpMultiplier, minBonus, maxBonus);
 	}
 
 	public ManaData start() {
 		return new ManaData(this.startMax, this.startMax);
+	}
+
+	public double killMaxManaGain(double killedMaxHealth) {
+		return killedMaxHealth * this.killMaxManaMultiplier;
 	}
 
 	public double foodFraction(int nutrition, Identifier food) {

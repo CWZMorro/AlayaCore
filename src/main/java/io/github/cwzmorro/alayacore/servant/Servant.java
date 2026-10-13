@@ -8,8 +8,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 
 /**
- * A servant a player can become. Content mods register theirs in
- * {@link io.github.cwzmorro.alayacore.api.AlayaRegistries#SERVANT}.
+ * A servant a player can become, registered in {@link io.github.cwzmorro.alayacore.api.AlayaRegistries#SERVANT}.
+ * Name and optional title come from the language file ({@code servant.<namespace>.<path>}, {@code .title});
+ * true-name deeds are data.
  *
  * @param abilities everything the servant can cast; all of them come with choosing it
  * @param divinity  its divinity at 100% sync, 0 to 10; 0 for none

@@ -5,6 +5,8 @@ import io.github.cwzmorro.alayacore.network.ShieldConfigPayload;
 import io.github.cwzmorro.alayacore.network.ShieldHitPayload;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -22,7 +24,7 @@ import org.jspecify.annotations.Nullable;
 
 /** Intercepts attacks against entities and blocks sheltered by shields. */
 public final class Shields {
-	/** Bounds shield lookups in blocks; a shield's shape must fit within it. */
+	/** Bounds shield lookups in blocks; larger shapes are rejected by {@link ShieldEntity#fitBox}. */
 	public static final double MAX_RADIUS = 32.0;
 
 	public record Hit(ShieldEntity shield, Vec3 entry) {
@@ -72,6 +74,21 @@ public final class Shields {
 			blocks.removeIf(pos -> firstHit(shields, centre, Vec3.atCenterOf(pos)) != null);
 		}
 		return blocks;
+	}
+
+	/**
+	 * Hits the target or an intervening shield, adding its UUID to {@code struck}.
+	 * Skips targets and shields already in that set.
+	 */
+	public static void strike(ServerLevel level, Vec3 from, Entity target, DamageSource source, float amount, Set<UUID> struck) {
+		Hit shield = firstHit(level, from, target.getBoundingBox().getCenter());
+		if (shield != null) {
+			if (struck.add(shield.shield().getUUID())) {
+				shield.shield().hurtAt(level, source, amount, shield.entry());
+			}
+		} else if (struck.add(target.getUUID())) {
+			target.hurtServer(level, source, amount);
+		}
 	}
 
 	static @Nullable Vec3 origin(DamageSource source) {

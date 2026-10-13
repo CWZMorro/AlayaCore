@@ -12,16 +12,21 @@ import static io.github.cwzmorro.alayacore.gametest.TestPlayers.join;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAs;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.revoke;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import io.github.cwzmorro.alayacore.AlayaItems;
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.progression.ClassGrade;
 import io.github.cwzmorro.alayacore.progression.ClassGrades;
+import io.github.cwzmorro.alayacore.progression.DeedKinds;
 import io.github.cwzmorro.alayacore.progression.Grand;
 import io.github.cwzmorro.alayacore.progression.GrandData;
 import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.progression.ProgressionConfig;
 import io.github.cwzmorro.alayacore.progression.TrueName;
+import io.github.cwzmorro.alayacore.progression.TrueNameDeeds;
+import io.github.cwzmorro.alayacore.servant.ServantClass;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantSelection;
 import io.github.cwzmorro.alayacore.servant.ServantStats;
@@ -33,6 +38,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -51,6 +57,9 @@ public class ProgressionGameTests {
 	private static final Identifier ARCHER_KILL_DEED = TestServants.id("archer/kill_zombie");
 	private static final Identifier ARCHER_RAID_DEED = TestServants.id("archer/win_raid");
 	private static final Identifier ARCHER_TRUE_NAME = TestServants.id("archer/true_name");
+	private static final Identifier LEGEND_SAY_DEED = TestServants.id("legend/say");
+	private static final Identifier LEGEND_KILL_DEED = TestServants.id("legend/kill_skeleton");
+	private static final Identifier LEGEND_TRUE_NAME = TestServants.id("legend/true_name");
 	private static final int PROMOTIONS = 4;
 	private static final int DEMOTIONS = 5;
 	private static final int PROTECTION_LEVEL = 4;
@@ -116,6 +125,54 @@ public class ProgressionGameTests {
 		check(helper, "max HP with the true name share", ServantStats.between(config.demi(), classConfig(ServantClasses.ARCHER).real(),
 			config.barFill(Progression.sync(player), true)).maxHp(),
 			player.getMaxHealth());
+		helper.succeed();
+	}
+
+	@GameTest
+	public void gradeDescriptionsShowTheSyncOfTheLiveConfig(GameTestHelper helper) {
+		Identifier archer = ServantClasses.ARCHER.identifier();
+		for (ClassGrade grade : ClassGrade.values()) {
+			check(helper, grade.key() + " description",
+				grade.description(ServantClass.name(archer), Percent.fromFraction(AlayaConfig.progression().syncFor(grade))),
+				advancement(helper, ClassGrades.advancement(archer, grade)).value().display().orElseThrow().getDescription());
+		}
+		helper.succeed();
+	}
+
+	@GameTest
+	public void deedDataReadsAlayaCoresKinds(GameTestHelper helper) {
+		String json = """
+			{"branch": "a:root",
+			 "deeds": [{"advancement": "a:kill", "kill": "minecraft:warden"},
+			           {"advancement": "a:raid", "win_raid": true}],
+			 "awakening": "a:true_name"}""";
+		TrueNameDeeds deeds = TrueNameDeeds.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)).getOrThrow();
+		check(helper, "deeds", 2, deeds.deeds().size());
+		check(helper, "kill deed", new TrueNameDeeds.Condition<>(DeedKinds.KILL,
+			new ExtraCodecs.TagOrElementLocation(Identifier.withDefaultNamespace("warden"), false)), deeds.deeds().getFirst().condition());
+		check(helper, "raid deed", DeedKinds.WIN_RAID, deeds.deeds().get(1).condition().kind());
+		helper.succeed();
+	}
+
+	@GameTest
+	public void contentModsAddDeedKindsAndKillsTakeATag(GameTestHelper helper) {
+		ServerPlayer player = joinAs(helper, TestServants.LEGEND);
+		TrueName.happened(player, TestDeeds.SAY, "goodbye");
+		check(helper, "other words do nothing", false, done(helper, player, LEGEND_SAY_DEED));
+		kill(helper, player, helper.spawn(EntityType.SKELETON, INSIDE));
+		check(helper, "kill deed before the deed of the new kind", false, done(helper, player, LEGEND_KILL_DEED));
+		TrueName.happened(player, TestDeeds.SAY, "hello");
+		check(helper, "deed of the new kind", true, done(helper, player, LEGEND_SAY_DEED));
+
+		kill(helper, player, helper.spawn(EntityType.ZOMBIE, INSIDE));
+		check(helper, "an entity outside the tag does nothing", false, done(helper, player, LEGEND_KILL_DEED));
+		kill(helper, player, helper.spawn(EntityType.STRAY, INSIDE));
+		check(helper, "kill deed by tag", true, done(helper, player, LEGEND_KILL_DEED));
+		kill(helper, player, helper.spawn(EntityType.WITHER, BESIDE));
+		check(helper, "true name", true, done(helper, player, LEGEND_TRUE_NAME));
+
+		check(helper, "unknown kind refused", true, TrueNameDeeds.Deed.CODEC.parse(JsonOps.INSTANCE,
+			JsonParser.parseString("{\"advancement\": \"a:b\", \"unknown\": true}")).isError());
 		helper.succeed();
 	}
 

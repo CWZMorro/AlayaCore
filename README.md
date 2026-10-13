@@ -9,7 +9,7 @@ Alaya Core is a Fabric library for Fate-inspired mods, built for [Fatecraft](htt
 It provides servant classes and selection, mana and progression, customizable abilities and HUDs, ranked beam clashes, shields and divinity.
 Content mods supply the servants, weapons and effects; balance and server rules are configurable.
 
-Beta version (0.1.0).
+Beta version (0.1.1).
 
 Releases: [GitHub Releases](https://github.com/CWZMorro/AlayaCore/releases).
 

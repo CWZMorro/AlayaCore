@@ -11,8 +11,7 @@
       "with": [
         {
           "translate": "servant_class.alayacore.saber"
-        },
-        "100"
+        }
       ]
     },
     "frame": "challenge",

@@ -14,6 +14,8 @@ import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
 import io.github.cwzmorro.alayacore.mana.ManaCommand;
 import io.github.cwzmorro.alayacore.mana.ManaEvents;
 import io.github.cwzmorro.alayacore.mana.ManaStorage;
+import io.github.cwzmorro.alayacore.marble.RealityMarbles;
+import io.github.cwzmorro.alayacore.progression.ClassGrades;
 import io.github.cwzmorro.alayacore.progression.Grand;
 import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.progression.TrueName;
@@ -60,7 +62,9 @@ public final class AlayaCore implements ModInitializer {
 		Divinity.register();
 		Shields.register();
 		BeamClashes.register();
+		RealityMarbles.register();
 		Progression.register();
+		ClassGrades.register();
 		Grand.register();
 		Abilities.register();
 		Presets.register();

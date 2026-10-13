@@ -1,0 +1,19 @@
+{
+	"parent": "alayacore-gametest:legend/say",
+	"criteria": {
+		"granted": {
+			"trigger": "minecraft:impossible"
+		}
+	},
+	"display": {
+		"icon": {
+			"id": "minecraft:book"
+		},
+		"title": "Test",
+		"description": "Test",
+		"frame": "goal",
+		"hidden": false,
+		"show_toast": false,
+		"announce_to_chat": false
+	}
+}
