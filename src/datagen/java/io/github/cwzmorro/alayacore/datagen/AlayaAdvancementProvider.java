@@ -1,10 +1,8 @@
 package io.github.cwzmorro.alayacore.datagen;
 
 import io.github.cwzmorro.alayacore.AlayaItems;
-import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.progression.ClassGrades;
 import io.github.cwzmorro.alayacore.progression.TrueName;
-import io.github.cwzmorro.alayacore.servant.ServantClass;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -29,8 +27,7 @@ final class AlayaAdvancementProvider extends FabricAdvancementProvider {
 
 		AdvancementHolder classes = ClassGrades.root(new ItemStackTemplate(AlayaItems.ALL));
 		output.accept(classes);
-		for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
-			Identifier classId = AlayaRegistries.SERVANT_CLASS.getKey(servantClass);
+		for (Identifier classId : AlayaServantClassProvider.ids()) {
 			ClassGrades.chain(classes, classId, grade -> badge(AlayaDataGenerator.classBadge(classId, grade))).forEach(output);
 		}
 	}

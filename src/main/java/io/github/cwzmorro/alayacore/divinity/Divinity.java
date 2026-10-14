@@ -4,7 +4,6 @@ import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.progression.Progression;
-import io.github.cwzmorro.alayacore.servant.Servant;
 import java.util.Optional;
 import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
 import net.minecraft.core.Registry;
@@ -18,12 +17,14 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public final class Divinity {
 	public static final ResourceKey<Registry<DivinityDefault>> DEFAULTS_KEY = ResourceKey.createRegistryKey(AlayaCore.id("divinity"));
+	public static final ResourceKey<Registry<ServantDivinity>> SERVANTS_KEY = ResourceKey.createRegistryKey(AlayaCore.id("servant_divinity"));
 
 	private Divinity() {
 	}
 
 	public static void register() {
 		DynamicRegistries.register(DEFAULTS_KEY, DivinityDefault.CODEC);
+		DynamicRegistries.register(SERVANTS_KEY, ServantDivinity.CODEC);
 	}
 
 	/**
@@ -31,9 +32,12 @@ public final class Divinity {
 	 * Missing data yields zero.
 	 */
 	public static double of(LivingEntity entity) {
-		Optional<Servant> servant = AlayaServants.servant(entity);
+		Optional<Identifier> servant = AlayaServants.servantId(entity);
 		if (servant.isPresent()) {
-			return DivinityRules.servantDivinity(servant.get().divinity(), Progression.sync(entity));
+			return entity.level().registryAccess().lookup(SERVANTS_KEY)
+				.flatMap(defaults -> defaults.getOptional(servant.get()))
+				.map(value -> DivinityRules.servantDivinity(value.start(), value.max(), Progression.sync(entity)))
+				.orElse(0);
 		}
 		Identifier type = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
 		return AlayaConfig.divinity().divinity(type).orElseGet(() -> entity.level().registryAccess().lookup(DEFAULTS_KEY)

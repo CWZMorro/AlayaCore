@@ -1,0 +1,13 @@
+{
+  "mana_regen_bonus_percent": 20.0,
+  "order": 1,
+  "real": {
+    "armor": 2.0,
+    "attack": 24.0,
+    "knockback_resistance": 0.4,
+    "max_hp": 275.0,
+    "speed_percent": 25.0,
+    "toughness": 0.0
+  },
+  "regen_while_casting": true
+}

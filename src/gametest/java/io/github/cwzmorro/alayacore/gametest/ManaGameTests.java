@@ -9,8 +9,10 @@ import static io.github.cwzmorro.alayacore.gametest.TestPlayers.revoke;
 
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
+import io.github.cwzmorro.alayacore.mana.CakeFoods;
 import io.github.cwzmorro.alayacore.mana.ManaConfig;
 import io.github.cwzmorro.alayacore.mana.ManaData;
+import io.github.cwzmorro.alayacore.mana.SweetFoods;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
 import net.minecraft.advancements.AdvancementHolder;
@@ -56,7 +58,7 @@ public class ManaGameTests {
 		ItemStack stack = new ItemStack(food);
 		FoodProperties properties = stack.get(DataComponents.FOOD);
 		stack.finishUsingItem(helper.getLevel(), player);
-		double expected = config().startMax() * config().foodFraction(properties.nutrition(), BuiltInRegistries.ITEM.getKey(food));
+		double expected = config().startMax() * SweetFoods.foodFraction(helper.getLevel().registryAccess(), properties.nutrition(), BuiltInRegistries.ITEM.getKey(food));
 		check(helper, "current", expected, mana(helper, player).current());
 		helper.succeed();
 	}
@@ -102,7 +104,23 @@ public class ManaGameTests {
 
 	@GameTest
 	public void cookieGivesNutritionPlusSweetBonus(GameTestHelper helper) {
+		check(helper, "default cookie data", 3.0, helper.getLevel().registryAccess().lookupOrThrow(SweetFoods.KEY)
+			.getOptional(BuiltInRegistries.ITEM.getKey(Items.COOKIE)).orElseThrow().percent());
 		checkFood(helper, Items.COOKIE);
+	}
+
+	@GameTest
+	public void testFoodGetsItsBonusFromData(GameTestHelper helper) {
+		ServerPlayer player = join(helper);
+		AlayaMana.update(player, m -> m.withCurrent(0));
+		ItemStack apple = new ItemStack(Items.APPLE);
+		int nutrition = apple.get(DataComponents.FOOD).nutrition();
+		apple.finishUsingItem(helper.getLevel(), player);
+		check(helper, "data percentage", 7.0, helper.getLevel().registryAccess().lookupOrThrow(SweetFoods.KEY)
+			.getOptional(BuiltInRegistries.ITEM.getKey(Items.APPLE)).orElseThrow().percent());
+		check(helper, "nutrition plus test data bonus", config().startMax() * config().foodFraction(nutrition,
+			BuiltInRegistries.ITEM.getKey(Items.APPLE), 7.0), mana(helper, player).current());
+		helper.succeed();
 	}
 
 	@GameTest
@@ -116,8 +134,38 @@ public class ManaGameTests {
 		AlayaMana.update(player, m -> m.withCurrent(0));
 		helper.setBlock(INSIDE, Blocks.CAKE);
 		helper.useBlock(INSIDE, player);
-		double expected = config().startMax() * config().foodFraction(CAKE_SLICE_NUTRITION, BuiltInRegistries.ITEM.getKey(Items.CAKE));
+		check(helper, "default cake slice data", 5.0, SweetFoods.percent(helper.getLevel().registryAccess(), CakeFoods.SLICE));
+		double expected = config().startMax() * CakeFoods.foodFraction(helper.getLevel().registryAccess(), CAKE_SLICE_NUTRITION, BuiltInRegistries.ITEM.getKey(Items.CAKE));
 		check(helper, "current", expected, mana(helper, player).current());
+		helper.succeed();
+	}
+
+	@GameTest
+	public void taggedModCakeGetsTheFullSliceBonusEvenAtNineteenHunger(GameTestHelper helper) {
+		ServerPlayer player = join(helper);
+		AlayaMana.update(player, m -> m.withCurrent(0));
+		player.getFoodData().setFoodLevel(19);
+		helper.setBlock(INSIDE, TestFoods.CAKE);
+		helper.useBlock(INSIDE, player);
+		check(helper, "nutrition capped at twenty", 20, player.getFoodData().getFoodLevel());
+		check(helper, "actual two-point slice plus cake bonus", config().startMax() * config().foodFraction(CAKE_SLICE_NUTRITION,
+			BuiltInRegistries.ITEM.getKey(TestFoods.CAKE.asItem()), 5.0), mana(helper, player).current());
+		AlayaMana.update(player, m -> m.withCurrent(0));
+		player.getFoodData().setFoodLevel(19);
+		helper.setBlock(INSIDE, TestFoods.UNTAGGED);
+		helper.useBlock(INSIDE, player);
+		check(helper, "untagged block cannot inherit the scoped cake bonus", 0.0, mana(helper, player).current());
+		helper.succeed();
+	}
+
+	@GameTest
+	public void candleCakeGivesOneSliceBonus(GameTestHelper helper) {
+		ServerPlayer player = join(helper);
+		AlayaMana.update(player, m -> m.withCurrent(0));
+		helper.setBlock(INSIDE, Blocks.CANDLE_CAKE);
+		helper.useBlock(INSIDE, player);
+		check(helper, "one candle cake slice", config().startMax() * config().foodFraction(CAKE_SLICE_NUTRITION,
+			BuiltInRegistries.ITEM.getKey(Items.CAKE), 5.0), mana(helper, player).current());
 		helper.succeed();
 	}
 

@@ -2,31 +2,53 @@ package io.github.cwzmorro.alayacore.servant;
 
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
-import net.minecraft.core.Registry;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 
-/** Alaya Core's classes: the seven standard ones in Fate's usual order, then Ruler and Shielder. */
+/**
+ * Servant classes as data: synced definitions in {@code data/<namespace>/alayacore/servant_class/<class path>.json}.
+ * Alaya Core's own are the seven standard ones in Fate's usual order, then Ruler and Shielder, with {@code order} 0 to 8.
+ */
 public final class ServantClasses {
-	// Real values: max HP, attack, armor, toughness, speed %, knockback resistance; mana regen bonus %, regen while casting.
-	public static final ResourceKey<ServantClass> SABER = register("saber", new ServantStats(350, 36, 4, 2, 20, 0.7), 0, false);
-	public static final ResourceKey<ServantClass> ARCHER = register("archer", new ServantStats(275, 24, 2, 0, 25, 0.4), 20, true);
-	public static final ResourceKey<ServantClass> LANCER = register("lancer", new ServantStats(325, 32, 3, 1, 30, 0.6), 0, false);
-	public static final ResourceKey<ServantClass> RIDER = register("rider", new ServantStats(300, 28, 2, 1, 25, 0.5), 0, false);
-	public static final ResourceKey<ServantClass> CASTER = register("caster", new ServantStats(200, 16, 1, 0, 10, 0.3), 0, false);
-	public static final ResourceKey<ServantClass> ASSASSIN = register("assassin", new ServantStats(225, 32, 1, 0, 30, 0.2), 0, false);
-	public static final ResourceKey<ServantClass> BERSERKER = register("berserker", new ServantStats(400, 40, 4, 2, 15, 1.0), 0, false);
-	public static final ResourceKey<ServantClass> RULER = register("ruler", new ServantStats(350, 28, 3, 1, 20, 0.6), 0, false);
-	public static final ResourceKey<ServantClass> SHIELDER = register("shielder", new ServantStats(375, 20, 6, 4, 15, 0.9), 0, false);
+	public static final ResourceKey<ServantClass> SABER = key("saber");
+	public static final ResourceKey<ServantClass> ARCHER = key("archer");
+	public static final ResourceKey<ServantClass> LANCER = key("lancer");
+	public static final ResourceKey<ServantClass> RIDER = key("rider");
+	public static final ResourceKey<ServantClass> CASTER = key("caster");
+	public static final ResourceKey<ServantClass> ASSASSIN = key("assassin");
+	public static final ResourceKey<ServantClass> BERSERKER = key("berserker");
+	public static final ResourceKey<ServantClass> RULER = key("ruler");
+	public static final ResourceKey<ServantClass> SHIELDER = key("shielder");
 
 	private ServantClasses() {
 	}
 
-	private static ResourceKey<ServantClass> register(String name, ServantStats real, double manaRegenBonusPercent, boolean regenWhileCasting) {
-		ResourceKey<ServantClass> key = ResourceKey.create(AlayaRegistries.SERVANT_CLASS_KEY, AlayaCore.id(name));
-		Registry.register(AlayaRegistries.SERVANT_CLASS, key, new ServantClass(new ServantClassConfig(real, manaRegenBonusPercent, regenWhileCasting)));
-		return key;
+	private static ResourceKey<ServantClass> key(String name) {
+		return ResourceKey.create(AlayaRegistries.SERVANT_CLASS_KEY, AlayaCore.id(name));
 	}
 
-	public static void init() {
+	public static void register() {
+		DynamicRegistries.registerSynced(AlayaRegistries.SERVANT_CLASS_KEY, ServantClass.CODEC);
+	}
+
+	public static Map<Identifier, ServantClass> ordered(RegistryAccess registries) {
+		Map<Identifier, ServantClass> classes = new LinkedHashMap<>();
+		registries.lookup(AlayaRegistries.SERVANT_CLASS_KEY).ifPresent(registry -> registry.listElements()
+			.sorted(Comparator.<Holder.Reference<ServantClass>>comparingInt(holder -> holder.value().order())
+				.thenComparing(holder -> holder.key().identifier()))
+			.forEach(holder -> classes.put(holder.key().identifier(), holder.value())));
+		return Collections.unmodifiableMap(classes);
+	}
+
+	public static Optional<ServantClass> get(RegistryAccess registries, ResourceKey<ServantClass> key) {
+		return registries.lookup(AlayaRegistries.SERVANT_CLASS_KEY).flatMap(registry -> registry.get(key)).map(Holder::value);
 	}
 }

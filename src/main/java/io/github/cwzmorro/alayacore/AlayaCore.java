@@ -12,15 +12,18 @@ import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.config.ConfigCommand;
 import io.github.cwzmorro.alayacore.divinity.Divinity;
 import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
+import io.github.cwzmorro.alayacore.loot.LootTableGroups;
 import io.github.cwzmorro.alayacore.mana.ManaCommand;
 import io.github.cwzmorro.alayacore.mana.ManaEvents;
 import io.github.cwzmorro.alayacore.mana.ManaStorage;
+import io.github.cwzmorro.alayacore.mana.SweetFoods;
 import io.github.cwzmorro.alayacore.marble.RealityMarbles;
 import io.github.cwzmorro.alayacore.progression.ClassGrades;
 import io.github.cwzmorro.alayacore.progression.Grand;
 import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.progression.TrueName;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
+import io.github.cwzmorro.alayacore.servant.ServantDefinitions;
 import io.github.cwzmorro.alayacore.servant.ServantSelection;
 import io.github.cwzmorro.alayacore.servant.ServantStartingItems;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
@@ -50,7 +53,6 @@ public final class AlayaCore implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		AlayaRegistries.init();
-		ServantClasses.init();
 		AlayaGameRules.init();
 		AlayaItems.init();
 		ManaStorage.init();
@@ -59,11 +61,15 @@ public final class AlayaCore implements ModInitializer {
 		Attacks.init();
 		ContinuousSource.init();
 		ServerPlayerEvents.AFTER_RESPAWN.addPhaseOrdering(Event.DEFAULT_PHASE, AFTER_ATTACHMENTS_COPIED);
+		SweetFoods.register();
 		ManaEvents.register();
+		ServantClasses.register();
+		ServantDefinitions.register();
 		ServantSelection.register();
 		ServantStartingItems.register();
 		TrueName.register();
 		Divinity.register();
+		LootTableGroups.register();
 		Shields.register();
 		BeamClashes.register();
 		RealityMarbles.register();
@@ -75,7 +81,7 @@ public final class AlayaCore implements ModInitializer {
 		AbilitySettings.register();
 		ConfigCommand.register();
 		ManaCommand.register();
-		ServerLifecycleEvents.SERVER_STARTING.register(server -> AlayaConfig.load());
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> AlayaConfig.load(server.registryAccess()));
 		LOGGER.info("Alaya Core loaded");
 	}
 }

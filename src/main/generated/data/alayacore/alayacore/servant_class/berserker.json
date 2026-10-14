@@ -1,0 +1,11 @@
+{
+  "order": 6,
+  "real": {
+    "armor": 4.0,
+    "attack": 40.0,
+    "knockback_resistance": 1.0,
+    "max_hp": 400.0,
+    "speed_percent": 15.0,
+    "toughness": 2.0
+  }
+}

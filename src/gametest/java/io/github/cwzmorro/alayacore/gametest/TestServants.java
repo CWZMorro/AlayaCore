@@ -3,14 +3,13 @@ package io.github.cwzmorro.alayacore.gametest;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.servant.Servant;
 import io.github.cwzmorro.alayacore.servant.ServantClass;
-import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
-import io.github.cwzmorro.alayacore.servant.ServantStats;
 import java.util.List;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 
 // Separate servants keep tests from claiming each other's selection.
 public final class TestServants implements ModInitializer, DedicatedServerModInitializer {
@@ -26,15 +25,15 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 	public static final Identifier CASTER = id("caster");
 	public static final Identifier DIVINE = id("divine");
 	static final int DIVINE_MAX = 5;
+	public static final Identifier DIVINE_TWO = id("divine_two");
 	public static final Identifier RANKED = id("ranked");
 	public static final Identifier LEGEND = id("legend");
 	// STARTER, RELENTLESS, DATA_CLASS_SERVANT and BOWMAN are for server game tests only, so the client tests' selection screen is unchanged.
 	public static final Identifier STARTER = id("starter");
 	public static final Identifier RELENTLESS = id("relentless");
-	// Classes without servants force the contents list onto a second page.
-	private static final List<String> EXTRA_CLASSES = List.of("avenger", "alter_ego", "foreigner", "moon_cancer", "beast", "pretender",
-		"test_class_1", "test_class_2", "test_class_3", "test_class_4", "test_class_5", "test_class_6", "test_class_7", "test_class_8");
-	private static final ServantClassConfig EXTRA_CLASS_VALUES = new ServantClassConfig(new ServantStats(300, 28, 2, 1, 20, 0.5), 0, false);
+	// Data-only classes force the contents list onto a second page.
+	public static final ResourceKey<ServantClass> DATA_CLASS = ResourceKey.create(AlayaRegistries.SERVANT_CLASS_KEY, id("test_class_8"));
+	public static final Identifier DATA_CLASS_SERVANT = id("data_class_servant");
 
 	static Identifier id(String path) {
 		return Identifier.fromNamespaceAndPath("alayacore-gametest", path);
@@ -43,13 +42,15 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 	@Override
 	public void onInitialize() {
 		TestAbilities.register();
+		TestFoods.register();
 		TestShields.init();
 		TestMarbles.register();
 		TestDeeds.init();
 		for (Identifier id : new Identifier[]{SOLO, CONTESTED, OLD, NEW, IGNORED, FORCED, ANNOUNCED}) {
 			Registry.register(AlayaRegistries.SERVANT, id, new Servant(ServantClasses.SABER, List.of()));
 		}
-		Registry.register(AlayaRegistries.SERVANT, DIVINE, new Servant(ServantClasses.SABER, List.of(), DIVINE_MAX));
+		Registry.register(AlayaRegistries.SERVANT, DIVINE, new Servant(ServantClasses.SABER, List.of()));
+		Registry.register(AlayaRegistries.SERVANT, DIVINE_TWO, new Servant(ServantClasses.SABER, List.of()));
 		Registry.register(AlayaRegistries.SERVANT, ARCHER, new Servant(ServantClasses.ARCHER, List.of(TestAbilities.RECORDER)));
 		Registry.register(AlayaRegistries.SERVANT, RANKED, new Servant(ServantClasses.RIDER,
 			List.of(TestAbilities.RECORDER, TestAbilities.RANGED, TestAbilities.UNKNOWN, TestAbilities.PASSIVE)));
@@ -58,15 +59,12 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 			TestAbilities.EXCLUSIVE, TestAbilities.NOBLE_PHANTASM, TestAbilities.COOLDOWN, TestAbilities.COSTLY, TestAbilities.PICKY,
 			TestAbilities.CONFIGURABLE, TestAbilities.PASSIVE)));
 		Registry.register(AlayaRegistries.SERVANT, LEGEND, new Servant(ServantClasses.SABER, List.of()));
-		// After the servants above, which load Alaya Core's own classes, so these come after them.
-		for (String name : EXTRA_CLASSES) {
-			Registry.register(AlayaRegistries.SERVANT_CLASS, id(name), new ServantClass(EXTRA_CLASS_VALUES));
-		}
 	}
 
 	@Override
 	public void onInitializeServer() {
 		Registry.register(AlayaRegistries.SERVANT, STARTER, new Servant(ServantClasses.SABER, List.of()));
+		Registry.register(AlayaRegistries.SERVANT, DATA_CLASS_SERVANT, new Servant(DATA_CLASS, List.of()));
 		Registry.register(AlayaRegistries.SERVANT, RELENTLESS, new Servant(ServantClasses.SABER, List.of()).meleeIgnoringHitCooldown());
 	}
 }

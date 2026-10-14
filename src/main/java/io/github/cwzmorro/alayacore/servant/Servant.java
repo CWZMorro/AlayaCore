@@ -1,7 +1,6 @@
 package io.github.cwzmorro.alayacore.servant;
 
 import io.github.cwzmorro.alayacore.ability.Ability;
-import io.github.cwzmorro.alayacore.divinity.DivinityRules;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -13,28 +12,20 @@ import net.minecraft.resources.ResourceKey;
  * true-name deeds are data.
  *
  * @param abilities everything the servant can cast; all of them come with choosing it
- * @param divinity  its divinity at 100% sync, 0 to 10; 0 for none
  * @param meleeIgnoresHitCooldown whether its melee hits land through the target's hit cooldown without starting a new one
  *                                ({@link io.github.cwzmorro.alayacore.combat.HitCooldown})
  */
-public record Servant(ResourceKey<ServantClass> servantClass, List<ResourceKey<Ability>> abilities, int divinity, boolean meleeIgnoresHitCooldown) {
+public record Servant(ResourceKey<ServantClass> servantClass, List<ResourceKey<Ability>> abilities, boolean meleeIgnoresHitCooldown) {
 	public Servant {
 		abilities = List.copyOf(abilities);
-		if (divinity < 0 || divinity > DivinityRules.MAX) {
-			throw new IllegalArgumentException("divinity must be 0.." + DivinityRules.MAX + ", got " + divinity);
-		}
-	}
-
-	public Servant(ResourceKey<ServantClass> servantClass, List<ResourceKey<Ability>> abilities, int divinity) {
-		this(servantClass, abilities, divinity, false);
 	}
 
 	public Servant(ResourceKey<ServantClass> servantClass, List<ResourceKey<Ability>> abilities) {
-		this(servantClass, abilities, 0);
+		this(servantClass, abilities, false);
 	}
 
 	public Servant meleeIgnoringHitCooldown() {
-		return new Servant(this.servantClass, this.abilities, this.divinity, true);
+		return new Servant(this.servantClass, this.abilities, true);
 	}
 
 	public static Component name(Identifier id) {

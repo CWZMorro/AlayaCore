@@ -9,6 +9,8 @@ import io.github.cwzmorro.alayacore.network.OpenServantSelectionPayload;
 import io.github.cwzmorro.alayacore.rank.Rank;
 import io.github.cwzmorro.alayacore.servant.Servant;
 import io.github.cwzmorro.alayacore.servant.ServantClass;
+import io.github.cwzmorro.alayacore.servant.ServantClasses;
+import io.github.cwzmorro.alayacore.servant.ServantDefinitions;
 import io.github.cwzmorro.alayacore.servant.ServantRules;
 import io.github.cwzmorro.alayacore.servant.ServantStats;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
@@ -177,7 +179,8 @@ public final class ServantSelectionScreen extends Screen {
 
 	private void buildEntries() {
 		Map<UUID, Identifier> owners = this.minecraft.level.globalAttachments().getAttachedOrElse(ServantStorage.OWNERS, Map.of());
-		List<Identifier> free = ServantRules.free(AlayaRegistries.SERVANT.keySet(), owners, this.minecraft.player.getUUID(), this.options.allowDuplicates());
+		Map<Identifier, Servant> selectable = ServantDefinitions.selectable(this.minecraft.level.registryAccess());
+		List<Identifier> free = ServantRules.free(selectable.keySet(), owners, this.minecraft.player.getUUID(), this.options.allowDuplicates());
 		List<Entry> body = new ArrayList<>();
 		body.add(new Entry(Component.translatable(KEY_PREFIX + "human.title").withStyle(ChatFormatting.BOLD), null, new ItemStack(Items.PLAYER_HEAD),
 			List.of(Block.text(Component.translatable(KEY_PREFIX + "human.description"), TEXT_COLOR)), ChooseServantPayload.Kind.HUMAN, null, true));
@@ -191,13 +194,13 @@ public final class ServantSelectionScreen extends Screen {
 			ChooseServantPayload.Kind.RANDOM, null, !free.isEmpty()));
 		List<ClassLine> classes = new ArrayList<>();
 		if (!this.options.forceRandom()) {
-			for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
-				Identifier classId = AlayaRegistries.SERVANT_CLASS.getKey(servantClass);
+			for (Identifier classId : ServantClasses.ordered(this.minecraft.level.registryAccess()).keySet()) {
 				int first = NO_TARGET;
-				for (Servant servant : AlayaRegistries.SERVANT) {
+				for (Map.Entry<Identifier, Servant> candidate : selectable.entrySet()) {
+					Servant servant = candidate.getValue();
 					if (servant.servantClass().identifier().equals(classId)) {
 						first = first == NO_TARGET ? body.size() : first;
-						body.add(this.servantEntry(AlayaRegistries.SERVANT.getKey(servant), servant, classId, free));
+						body.add(this.servantEntry(candidate.getKey(), servant, classId, free));
 					}
 				}
 				classes.add(new ClassLine(classId, first));
@@ -257,13 +260,13 @@ public final class ServantSelectionScreen extends Screen {
 				blocks.add(Block.row(statLabel(stat), this.statValue(stat, real), LABEL_COLOR));
 			}
 		}
-		List<ResourceKey<Ability>> abilities = servant.abilities().stream().filter(key -> Ability.listed(key.identifier())).toList();
+		List<ResourceKey<Ability>> abilities = servant.abilities();
 		if (!abilities.isEmpty()) {
 			blocks.add(Block.blank());
 			blocks.add(Block.heading("abilities"));
 			for (ResourceKey<Ability> key : abilities) {
 				Ability ability = AlayaRegistries.ABILITY.getValue(key);
-				String rank = ability == null ? null : ability.rankLabel();
+				String rank = this.options.rankLabels().getOrDefault(key.identifier(), ability == null ? null : ability.rankLabel());
 				blocks.add(Block.row(Ability.name(key.identifier()), rank == null ? null : Component.literal(rank), LABEL_COLOR));
 			}
 		}

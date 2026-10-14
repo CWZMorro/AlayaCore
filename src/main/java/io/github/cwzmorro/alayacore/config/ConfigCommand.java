@@ -21,7 +21,7 @@ public final class ConfigCommand {
 				.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 				.then(Commands.literal("config")
 					.then(Commands.literal("reload").executes(context -> {
-						List<String> warnings = AlayaConfig.load();
+						List<String> warnings = AlayaConfig.load(context.getSource().registryAccess());
 						Progression.refreshAll(context.getSource().getServer());
 						ClassGrades.describe(context.getSource().getServer().getAdvancements());
 						context.getSource().getServer().getPlayerList().getPlayers().forEach(Shields::syncConfig);

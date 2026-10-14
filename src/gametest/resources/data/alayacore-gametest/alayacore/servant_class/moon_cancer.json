@@ -1,0 +1,4 @@
+{
+	"order": 103,
+	"real": {"max_hp": 300, "attack": 28, "armor": 2, "toughness": 1, "speed_percent": 20, "knockback_resistance": 0.5}
+}

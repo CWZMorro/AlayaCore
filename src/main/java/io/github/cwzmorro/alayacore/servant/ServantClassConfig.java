@@ -1,5 +1,8 @@
 package io.github.cwzmorro.alayacore.servant;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.cwzmorro.alayacore.config.ConfigSection;
 import io.github.cwzmorro.alayacore.util.Percent;
 
@@ -11,6 +14,12 @@ import io.github.cwzmorro.alayacore.util.Percent;
  * @param regenWhileCasting     mana keeps regenerating while casting or holding an ability (Archer)
  */
 public record ServantClassConfig(ServantStats real, double manaRegenBonusPercent, boolean regenWhileCasting) {
+	public static final MapCodec<ServantClassConfig> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+		ServantStats.CODEC.fieldOf("real").forGetter(ServantClassConfig::real),
+		Codec.doubleRange(0.0, Double.MAX_VALUE).optionalFieldOf("mana_regen_bonus_percent", 0.0).forGetter(ServantClassConfig::manaRegenBonusPercent),
+		Codec.BOOL.optionalFieldOf("regen_while_casting", false).forGetter(ServantClassConfig::regenWhileCasting)
+	).apply(i, ServantClassConfig::new));
+
 	public static ServantClassConfig read(ConfigSection s, ServantClassConfig defaults) {
 		return new ServantClassConfig(
 			ServantStats.read(s, defaults.real),

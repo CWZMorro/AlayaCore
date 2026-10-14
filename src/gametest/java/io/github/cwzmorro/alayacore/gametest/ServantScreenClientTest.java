@@ -9,7 +9,7 @@ import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.client.screen.ServantSelectionScreen;
 import io.github.cwzmorro.alayacore.servant.Servant;
 import io.github.cwzmorro.alayacore.servant.ServantChoice;
-import io.github.cwzmorro.alayacore.servant.ServantClass;
+import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,7 +97,7 @@ public class ServantScreenClientTest implements FabricClientGameTest {
 
 			context.getInput().pressKey(options -> options.keyUse);
 			context.waitForScreen(ServantSelectionScreen.class);
-			moveTo(context, pages, 0, position(pages, servantIndex(TestServants.SOLO)));
+			moveTo(context, pages, 0, position(pages, servantIndex(context, TestServants.SOLO)));
 			check(!active(context, CHOOSE), "Choose active on a taken servant");
 			context.takeScreenshot("05-taken");
 			moveCursorAway(context);
@@ -108,7 +108,7 @@ public class ServantScreenClientTest implements FabricClientGameTest {
 			context.waitTick();
 			check(!active(context, CHOOSE), "the left key did not go back to the taken servant");
 
-			moveTo(context, pages, position(pages, servantIndex(TestServants.SOLO)), position(pages, servantIndex(TestServants.RANKED)));
+			moveTo(context, pages, position(pages, servantIndex(context, TestServants.SOLO)), position(pages, servantIndex(context, TestServants.RANKED)));
 			check(!active(context, CHOOSE), "Choose active on the taken servant with abilities");
 			context.takeScreenshot("06-taken-abilities");
 			context.getInput().setCursorPos(panelMiddle(context)[0], panelMiddle(context)[1]);
@@ -117,7 +117,7 @@ public class ServantScreenClientTest implements FabricClientGameTest {
 			check(!active(context, CHOOSE), "the wheel over the panel changed the servant");
 			context.takeScreenshot("07-scrolled");
 
-			moveTo(context, pages, position(pages, servantIndex(TestServants.RANKED)), pages + 1);
+			moveTo(context, pages, position(pages, servantIndex(context, TestServants.RANKED)), pages + 1);
 			context.takeScreenshot("08-random");
 			context.getInput().pressKey(InputConstants.KEY_LEFT);
 			context.waitTick();
@@ -160,11 +160,11 @@ public class ServantScreenClientTest implements FabricClientGameTest {
 		}
 	}
 
-	private static int servantIndex(Identifier servant) {
+	private static int servantIndex(ClientGameTestContext context, Identifier servant) {
 		int index = 0;
-		for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
+		for (Identifier classId : context.computeOnClient(client -> ServantClasses.ordered(client.level.registryAccess()).keySet())) {
 			for (Servant candidate : AlayaRegistries.SERVANT) {
-				if (candidate.servantClass().identifier().equals(AlayaRegistries.SERVANT_CLASS.getKey(servantClass))) {
+				if (candidate.servantClass().identifier().equals(classId)) {
 					if (AlayaRegistries.SERVANT.getKey(candidate).equals(servant)) {
 						return index;
 					}

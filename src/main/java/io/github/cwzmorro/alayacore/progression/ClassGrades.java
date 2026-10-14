@@ -1,7 +1,6 @@
 package io.github.cwzmorro.alayacore.progression;
 
 import io.github.cwzmorro.alayacore.AlayaCore;
-import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.servant.ServantClass;
@@ -74,15 +73,20 @@ public final class ClassGrades {
 
 	/**
 	 * Updates grade descriptions from the live config; clients see changes on their next full advancement update.
+	 * Reads class ids from advancements because class data may not yet be loaded.
 	 */
 	public static void describe(ServerAdvancementManager advancements) {
 		ProgressionConfig config = AlayaConfig.progression();
-		for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
-			Identifier classId = AlayaRegistries.SERVANT_CLASS.getKey(servantClass);
-			Component className = ServantClass.name(classId);
+		for (AdvancementHolder holder : advancements.getAllAdvancements()) {
+			String path = holder.id().getPath();
+			int grades = path.lastIndexOf('/');
+			if (!path.startsWith(PATH) || grades < PATH.length()) {
+				continue;
+			}
+			String gradeKey = path.substring(grades + 1);
+			Component className = ServantClass.name(holder.id().withPath(path.substring(PATH.length(), grades)));
 			for (ClassGrade grade : ClassGrade.values()) {
-				AdvancementHolder holder = advancements.get(advancement(classId, grade));
-				if (holder != null) {
+				if (grade.key().equals(gradeKey)) {
 					GrantedAdvancements.describe(holder.value(), grade.description(className, Percent.fromFraction(config.syncFor(grade))));
 				}
 			}

@@ -14,13 +14,19 @@ import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.api.AlayaServants;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
+import io.github.cwzmorro.alayacore.mana.SweetFoods;
 import io.github.cwzmorro.alayacore.network.OpenServantSelectionPayload;
+import io.github.cwzmorro.alayacore.progression.Progression;
 import io.github.cwzmorro.alayacore.servant.ServantChoice;
+import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
+import io.github.cwzmorro.alayacore.servant.ServantDefinitions;
 import io.github.cwzmorro.alayacore.servant.ServantSelection;
+import io.github.cwzmorro.alayacore.servant.ServantStats;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,7 +70,7 @@ public class ServantGameTests {
 	@GameTest
 	public void selectionStatsSurviveTheNetwork(GameTestHelper helper) {
 		OpenServantSelectionPayload options = new OpenServantSelectionPayload(false, false, true, AlayaConfig.progression().demi(),
-			ServantSelection.realStats());
+			ServantSelection.realStats(helper.getLevel().registryAccess()));
 		ByteBuf buffer = Unpooled.buffer();
 		try {
 			OpenServantSelectionPayload.STREAM_CODEC.encode(buffer, options);
@@ -73,6 +79,25 @@ public class ServantGameTests {
 		} finally {
 			buffer.release();
 		}
+		helper.succeed();
+	}
+
+	@GameTest
+	public void hiddenDataCannotBeChosenOrRandomlyPicked(GameTestHelper helper) {
+		Identifier hidden = TestServants.id("hidden");
+		check(helper, "hidden definition loaded", true, helper.getLevel().registryAccess().lookupOrThrow(ServantDefinitions.KEY)
+			.getOptional(hidden).orElseThrow().hidden());
+		check(helper, "hidden servant remains readable", true, ServantDefinitions.get(helper.getLevel().registryAccess(), hidden).isPresent());
+		check(helper, "screen and random pool exclude hidden data", false,
+			ServantDefinitions.selectable(helper.getLevel().registryAccess()).containsKey(hidden));
+		ServerPlayer player = join(helper);
+		ServantSelection.choose(player, servant(hidden));
+		check(helper, "direct choice refused", false, choice(player).decided());
+		check(helper, "selection remains open", true, choosing(player));
+		ServantSelection.choose(player, random());
+		check(helper, "random chose a visible servant", true, choice(player).servant()
+			.filter(ServantDefinitions.selectable(helper.getLevel().registryAccess())::containsKey).isPresent());
+		check(helper, "random did not choose hidden", false, choice(player).servant().filter(hidden::equals).isPresent());
 		helper.succeed();
 	}
 
@@ -176,6 +201,28 @@ public class ServantGameTests {
 	}
 
 	@GameTest
+	public void classAddedByDataGivesItsValues(GameTestHelper helper) {
+		release(helper.getLevel().getServer(), TestServants.DATA_CLASS_SERVANT);
+		ServerPlayer player = join(helper);
+		ServantSelection.choose(player, servant(TestServants.DATA_CLASS_SERVANT));
+		ServantStats real = new ServantStats(111, 12, 5, 3, 7, 0.25);
+		ServantClassConfig data = new ServantClassConfig(real, 10, false);
+		check(helper, "the data's values", data, ServantClasses.get(helper.getLevel().registryAccess(), TestServants.DATA_CLASS).orElseThrow().defaults());
+		// What the servant gets is the data's values, or the config's if a kept test world's file changes them.
+		ServantClassConfig config = classConfig(TestServants.DATA_CLASS);
+		check(helper, "the servant gets them", config, AlayaServants.classConfig(player).orElse(null));
+		check(helper, "mana regeneration bonus", config.manaRegenMultiplier(), AlayaServants.manaRegenMultiplier(player));
+		check(helper, "max HP follows the data's class", Progression.stats(player, config).maxHp(), player.getMaxHealth());
+		check(helper, "the selection screen is sent them", config.real(),
+			ServantSelection.realStats(helper.getLevel().registryAccess()).get(TestServants.DATA_CLASS.identifier()));
+		List<Identifier> order = List.copyOf(ServantClasses.ordered(helper.getLevel().registryAccess()).keySet());
+		check(helper, "classes follow their order", ServantClasses.SABER.identifier(), order.getFirst());
+		check(helper, "Alaya Core's nine come first", ServantClasses.SHIELDER.identifier(), order.get(8));
+		check(helper, "data classes come after, by order", TestServants.DATA_CLASS.identifier(), order.getLast());
+		helper.succeed();
+	}
+
+	@GameTest
 	public void archerRegeneratesMore(GameTestHelper helper) {
 		release(helper.getLevel().getServer(), TestServants.ARCHER);
 		ServerPlayer player = join(helper);
@@ -187,7 +234,7 @@ public class ServantGameTests {
 		ItemStack cookie = new ItemStack(Items.COOKIE);
 		int nutrition = cookie.get(DataComponents.FOOD).nutrition();
 		cookie.finishUsingItem(helper.getLevel(), player);
-		double expected = AlayaConfig.mana().startMax() * AlayaConfig.mana().foodFraction(nutrition, BuiltInRegistries.ITEM.getKey(Items.COOKIE)) * multiplier;
+		double expected = AlayaConfig.mana().startMax() * SweetFoods.foodFraction(helper.getLevel().registryAccess(), nutrition, BuiltInRegistries.ITEM.getKey(Items.COOKIE)) * multiplier;
 		check(helper, "current after a cookie", expected, AlayaMana.get(player).current());
 		helper.succeed();
 	}

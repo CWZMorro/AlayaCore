@@ -17,14 +17,12 @@ import net.minecraft.resources.ResourceKey;
  * They are created when this class loads, so a content mod can use them from its initializer in any order.
  */
 public final class AlayaRegistries {
+	// Servant classes are a data registry, not one mods register into: see ServantClasses.
 	public static final ResourceKey<Registry<ServantClass>> SERVANT_CLASS_KEY = ResourceKey.createRegistryKey(AlayaCore.id("servant_class"));
 	public static final ResourceKey<Registry<Servant>> SERVANT_KEY = ResourceKey.createRegistryKey(AlayaCore.id("servant"));
 	public static final ResourceKey<Registry<Ability>> ABILITY_KEY = ResourceKey.createRegistryKey(AlayaCore.id("ability"));
 	public static final ResourceKey<Registry<DeedKind<?, ?>>> DEED_KIND_KEY = ResourceKey.createRegistryKey(AlayaCore.id("deed_kind"));
 
-	public static final Registry<ServantClass> SERVANT_CLASS = FabricRegistryBuilder.create(SERVANT_CLASS_KEY)
-		.attribute(RegistryAttribute.SYNCED)
-		.buildAndRegister();
 	public static final Registry<Servant> SERVANT = FabricRegistryBuilder.create(SERVANT_KEY)
 		.attribute(RegistryAttribute.SYNCED)
 		.buildAndRegister();

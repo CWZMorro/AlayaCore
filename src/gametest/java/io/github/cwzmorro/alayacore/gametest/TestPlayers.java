@@ -1,6 +1,5 @@
 package io.github.cwzmorro.alayacore.gametest;
 
-import io.github.cwzmorro.alayacore.api.AlayaRegistries;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.network.ChooseServantPayload;
 import io.github.cwzmorro.alayacore.servant.ServantClass;
@@ -98,7 +97,11 @@ final class TestPlayers {
 	}
 
 	static ServantClassConfig classConfig(ResourceKey<ServantClass> key) {
-		return AlayaConfig.servants().classConfig(key.identifier(), AlayaRegistries.SERVANT_CLASS.getValueOrThrow(key));
+		ServantClassConfig config = AlayaConfig.servants().classes().get(key.identifier());
+		if (config == null) {
+			throw new AssertionError("class not in the config: " + key.identifier());
+		}
+		return config;
 	}
 
 	static void check(boolean condition, String failure) {

@@ -10,8 +10,8 @@ import io.github.cwzmorro.alayacore.divinity.DivinityConfig;
 import io.github.cwzmorro.alayacore.mana.ManaConfig;
 import io.github.cwzmorro.alayacore.progression.ProgressionConfig;
 import io.github.cwzmorro.alayacore.rank.RankConfig;
-import io.github.cwzmorro.alayacore.servant.ServantClass;
 import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
+import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantConfig;
 import io.github.cwzmorro.alayacore.shield.ShieldConfig;
 import java.nio.file.Path;
@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
@@ -119,11 +120,9 @@ public final class AlayaConfig {
 		return table;
 	}
 
-	public static List<String> load() {
+	public static List<String> load(RegistryAccess registries) {
 		Map<Identifier, ServantClassConfig> classDefaults = new LinkedHashMap<>();
-		for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
-			classDefaults.put(AlayaRegistries.SERVANT_CLASS.getKey(servantClass), servantClass.defaults());
-		}
+		ServantClasses.ordered(registries).forEach((id, servantClass) -> classDefaults.put(id, servantClass.defaults()));
 		Map<Identifier, List<Double>> cooldownDefaults = new LinkedHashMap<>();
 		for (Ability ability : AlayaRegistries.ABILITY) {
 			if (!ability.passive()) {

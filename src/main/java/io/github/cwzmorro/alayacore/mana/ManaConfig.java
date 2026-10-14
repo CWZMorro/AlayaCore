@@ -2,8 +2,6 @@ package io.github.cwzmorro.alayacore.mana;
 
 import io.github.cwzmorro.alayacore.config.ConfigSection;
 import io.github.cwzmorro.alayacore.util.Percent;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.resources.Identifier;
 
@@ -32,18 +30,11 @@ public record ManaConfig(
 		0.25,
 		20.0,
 		50.0,
-		sweetFoods(),
+		Map.of(),
 		0.5,
 		25.0,
 		500.0
 	);
-
-	private static Map<Identifier, Double> sweetFoods() {
-		Map<Identifier, Double> map = new LinkedHashMap<>();
-		map.put(Identifier.withDefaultNamespace("cookie"), 3.0);
-		map.put(Identifier.withDefaultNamespace("cake"), 5.0);
-		return Collections.unmodifiableMap(map);
-	}
 
 	public static ManaConfig read(ConfigSection s) {
 		double startMax = s.number("start_max", " Max mana a new player starts with, and the max mana at which sync is 0%. Existing players keep theirs.",
@@ -62,7 +53,7 @@ public record ManaConfig(
 			DEFAULTS.respawnPercent, 0.0, Percent.WHOLE);
 
 		Map<Identifier, Double> sweetFoodPercent = s.section("sweet_food",
-				" Extra percent of max mana on top of the food's own value. Any food item can be added.\n Cake counts per slice.")
+				" Overrides the sweet_food data map's extra percent of max mana by item id.\n Cake counts per slice.")
 			.numbersById(DEFAULTS.sweetFoodPercent, 0.0, Percent.WHOLE);
 
 		ConfigSection challenge = s.section("challenge_advancement",
@@ -89,7 +80,11 @@ public record ManaConfig(
 	}
 
 	public double foodFraction(int nutrition, Identifier food) {
-		return Percent.toFraction(nutrition * this.foodPercentPerHungerPoint + this.sweetFoodPercent.getOrDefault(food, 0.0));
+		return this.foodFraction(nutrition, food, 0.0);
+	}
+
+	public double foodFraction(int nutrition, Identifier food, double dataPercent) {
+		return Percent.toFraction(nutrition * this.foodPercentPerHungerPoint + this.sweetFoodPercent.getOrDefault(food, dataPercent));
 	}
 
 	public double sleepFraction() {

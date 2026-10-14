@@ -1,6 +1,7 @@
 package io.github.cwzmorro.alayacore.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -82,7 +83,8 @@ class AlayaConfigTest {
 		assertTrue(written.contains("winner_continuation_percent = 90.0"), written);
 		assertTrue(written.contains("close_lower_drain_multiplier = 1.5"), written);
 		assertTrue(written.contains("regen_per_second = 3.0"), written);
-		assertTrue(written.contains("\"minecraft:cookie\" = 3.0"), written);
+		assertTrue(written.contains("[mana.sweet_food]"), written);
+		assertFalse(written.contains("\"minecraft:cookie\""), written);
 		assertTrue(written.contains("# Flat regeneration, mana per second."), written);
 
 		assertEquals(List.of(), AlayaConfig.load(this.file(), CLASSES, ABILITIES));
@@ -95,7 +97,7 @@ class AlayaConfigTest {
 	void editedValuesAreUsed() throws IOException {
 		AlayaConfig.load(this.file(), CLASSES, ABILITIES);
 		this.edit("regen_per_second = 3.0", "regen_per_second = 5.0");
-		this.edit("\"minecraft:cookie\" = 3.0", "\"minecraft:cookie\" = 3.0\n\"minecraft:cooked_beef\" = 2.0");
+		this.edit("[mana.sweet_food]", "[mana.sweet_food]\n\"minecraft:cookie\" = 3.0\n\"minecraft:cooked_beef\" = 2.0");
 		this.edit("A = [350.0, 415.0, 492.0]", "A = [360.0, 415.0, 492.0]");
 		this.edit("allow_duplicates = false", "allow_duplicates = true");
 		this.edit("max_hp = 275.0", "max_hp = 300.0");
@@ -115,7 +117,7 @@ class AlayaConfigTest {
 	void invalidValueFallsBackToDefaultWithAWarning() throws IOException {
 		AlayaConfig.load(this.file(), CLASSES, ABILITIES);
 		this.edit("sleep_percent = 20.0", "sleep_percent = 250.0");
-		this.edit("\"minecraft:cookie\" = 3.0", "\"minecraft:cookie\" = \"lots\"");
+		this.edit("[mana.sweet_food]", "[mana.sweet_food]\n\"minecraft:cookie\" = \"lots\"");
 
 		List<String> warnings = AlayaConfig.load(this.file(), CLASSES, ABILITIES);
 		assertEquals(2, warnings.size(), warnings.toString());

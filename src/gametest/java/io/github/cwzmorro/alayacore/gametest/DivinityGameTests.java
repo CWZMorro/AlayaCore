@@ -40,6 +40,15 @@ public class DivinityGameTests {
 	}
 
 	@GameTest
+	public void anotherServantTakesItsStartAndMaximumFromData(GameTestHelper helper) {
+		ServerPlayer player = joinAs(helper, TestServants.DIVINE_TWO);
+		check(helper, "data start", 2.0, Divinity.of(player));
+		AlayaMana.update(player, m -> m.withMax(AlayaConfig.progression().manaForSync(1.0)));
+		check(helper, "data maximum", 4.0, Divinity.of(player));
+		helper.succeed();
+	}
+
+	@GameTest
 	public void humansAndServantsWithoutDivinityHaveNone(GameTestHelper helper) {
 		ServerPlayer human = join(helper);
 		ServantSelection.choose(human, human());

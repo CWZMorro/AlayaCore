@@ -5,6 +5,8 @@ import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.servant.Servant;
 import io.github.cwzmorro.alayacore.servant.ServantChoice;
 import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
+import io.github.cwzmorro.alayacore.servant.ServantClasses;
+import io.github.cwzmorro.alayacore.servant.ServantDefinitions;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
 import java.util.Optional;
 import net.fabricmc.fabric.api.event.Event;
@@ -35,7 +37,7 @@ public final class AlayaServants {
 	}
 
 	public static Optional<Servant> servant(LivingEntity entity) {
-		return servantId(entity).flatMap(AlayaRegistries.SERVANT::getOptional);
+		return servantId(entity).flatMap(id -> ServantDefinitions.get(entity.level().registryAccess(), id));
 	}
 
 	public static Optional<Identifier> classId(LivingEntity entity) {
@@ -43,7 +45,7 @@ public final class AlayaServants {
 	}
 
 	public static Optional<ServantClassConfig> classConfig(LivingEntity entity) {
-		return servant(entity).flatMap(servant -> AlayaRegistries.SERVANT_CLASS.getOptional(servant.servantClass())
+		return servant(entity).flatMap(servant -> ServantClasses.get(entity.level().registryAccess(), servant.servantClass())
 			.map(servantClass -> AlayaConfig.servants().classConfig(servant.servantClass().identifier(), servantClass)));
 	}
 

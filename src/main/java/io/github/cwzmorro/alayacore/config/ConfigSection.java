@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.config;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
+import io.github.cwzmorro.alayacore.rank.Rank;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,6 +52,22 @@ public final class ConfigSection {
 		}
 		this.write(key, comment, whole);
 		return whole;
+	}
+
+	public Rank rank(String key, @Nullable String comment, Rank fallback) {
+		Rank value = fallback;
+		Object raw = this.raw(key);
+		if (raw instanceof String text) {
+			try {
+				value = Rank.parse(text);
+			} catch (IllegalArgumentException e) {
+				this.warn(key, "must be a rank from E to EX++");
+			}
+		} else if (raw != null) {
+			this.warn(key, "must be a rank from E to EX++");
+		}
+		this.write(key, comment, value.toString());
+		return value;
 	}
 
 	public boolean bool(String key, @Nullable String comment, boolean fallback) {

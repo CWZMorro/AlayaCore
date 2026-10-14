@@ -59,7 +59,11 @@ public final class ManaEvents {
 	}
 
 	public static void onAte(LivingEntity eater, int nutrition, Identifier food) {
-		regenerate(eater, AlayaConfig.mana().foodFraction(nutrition, food));
+		regenerate(eater, SweetFoods.foodFraction(eater.level().registryAccess(), nutrition, food));
+	}
+
+	public static void onCake(LivingEntity eater, int nutrition, Identifier food) {
+		regenerate(eater, CakeFoods.foodFraction(eater.level().registryAccess(), nutrition, food));
 	}
 
 	public static void onSleptThroughNight(ServerPlayer player) {

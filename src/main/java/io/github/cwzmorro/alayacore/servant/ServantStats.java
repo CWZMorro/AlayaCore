@@ -1,5 +1,7 @@
 package io.github.cwzmorro.alayacore.servant;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.cwzmorro.alayacore.config.ConfigSection;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,6 +17,15 @@ public record ServantStats(double maxHp, double attack, double armor, double tou
 	private static final double MAX_TOUGHNESS = 20.0;
 	private static final double MAX_KNOCKBACK_RESISTANCE = 1.0;
 	private static final double MAX_HEALTH = 1024.0;
+
+	public static final Codec<ServantStats> CODEC = RecordCodecBuilder.create(i -> i.group(
+		Codec.doubleRange(1.0, MAX_HEALTH).fieldOf("max_hp").forGetter(ServantStats::maxHp),
+		Codec.doubleRange(0.0, Double.MAX_VALUE).fieldOf("attack").forGetter(ServantStats::attack),
+		Codec.doubleRange(0.0, MAX_ARMOR).fieldOf("armor").forGetter(ServantStats::armor),
+		Codec.doubleRange(0.0, MAX_TOUGHNESS).fieldOf("toughness").forGetter(ServantStats::toughness),
+		Codec.doubleRange(0.0, Double.MAX_VALUE).fieldOf("speed_percent").forGetter(ServantStats::speedPercent),
+		Codec.doubleRange(0.0, MAX_KNOCKBACK_RESISTANCE).fieldOf("knockback_resistance").forGetter(ServantStats::knockbackResistance)
+	).apply(i, ServantStats::new));
 
 	public static final StreamCodec<ByteBuf, ServantStats> STREAM_CODEC = StreamCodec.composite(
 		ByteBufCodecs.DOUBLE, ServantStats::maxHp,

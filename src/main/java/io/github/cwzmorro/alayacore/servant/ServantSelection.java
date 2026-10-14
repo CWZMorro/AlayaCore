@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.servant;
 
 import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.ability.Abilities;
+import io.github.cwzmorro.alayacore.ability.Ability;
 import io.github.cwzmorro.alayacore.ability.AbilitySettings;
 import io.github.cwzmorro.alayacore.ability.Presets;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
@@ -25,6 +26,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -75,16 +77,24 @@ public final class ServantSelection {
 			AlayaConfig.servants().allowDuplicates(),
 			!isUndecided(player),
 			AlayaConfig.progression().demi(),
-			realStats()));
+			realStats(player.level().registryAccess())));
 	}
 
-	public static Map<Identifier, ServantStats> realStats() {
+	public static Map<Identifier, ServantStats> realStats(RegistryAccess registries) {
 		Map<Identifier, ServantStats> realStats = new HashMap<>();
-		for (ServantClass servantClass : AlayaRegistries.SERVANT_CLASS) {
-			Identifier id = AlayaRegistries.SERVANT_CLASS.getKey(servantClass);
-			realStats.put(id, AlayaConfig.servants().classConfig(id, servantClass).real());
-		}
+		ServantClasses.ordered(registries).forEach((id, servantClass) -> realStats.put(id, AlayaConfig.servants().classConfig(id, servantClass).real()));
 		return realStats;
+	}
+
+	public static Map<Identifier, String> rankLabels() {
+		Map<Identifier, String> labels = new HashMap<>();
+		for (Ability ability : AlayaRegistries.ABILITY) {
+			String label = ability.rankLabel();
+			if (label != null) {
+				labels.put(AlayaRegistries.ABILITY.getKey(ability), label);
+			}
+		}
+		return Map.copyOf(labels);
 	}
 
 	public static void choose(ServerPlayer player, ChooseServantPayload payload) {
@@ -92,7 +102,7 @@ public final class ServantSelection {
 			return;
 		}
 		boolean forceRandom = player.level().getGameRules().get(AlayaGameRules.FORCE_RANDOM_SERVANT);
-		List<Identifier> free = ServantRules.free(AlayaRegistries.SERVANT.keySet(), owners(player.level().getServer()),
+		List<Identifier> free = ServantRules.free(ServantDefinitions.selectable(player.level().registryAccess()).keySet(), owners(player.level().getServer()),
 			player.getUUID(), AlayaConfig.servants().allowDuplicates());
 
 		switch (payload.kind()) {

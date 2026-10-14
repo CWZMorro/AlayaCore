@@ -90,8 +90,7 @@ public abstract class Ability {
 	}
 
 	/**
-	 * Returns whether ability lists (the preset screen, its HUD and servant selection) show this ability; excludes passives but
-	 * includes unknown ids.
+	 * Returns whether the preset screen and HUD list this ability; excludes passives but includes unknown ids.
 	 */
 	public static boolean listed(Identifier id) {
 		return AlayaRegistries.ABILITY.getOptional(id).map(ability -> !ability.passive()).orElse(true);
