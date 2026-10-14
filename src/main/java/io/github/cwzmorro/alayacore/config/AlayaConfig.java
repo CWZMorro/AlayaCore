@@ -4,6 +4,8 @@ import io.github.cwzmorro.alayacore.AlayaCore;
 import io.github.cwzmorro.alayacore.ability.Ability;
 import io.github.cwzmorro.alayacore.ability.AbilityConfig;
 import io.github.cwzmorro.alayacore.api.AlayaRegistries;
+import io.github.cwzmorro.alayacore.beam.HeldBeamConfig;
+import io.github.cwzmorro.alayacore.bow.ArcherBowConfig;
 import io.github.cwzmorro.alayacore.clash.ClashConfig;
 import io.github.cwzmorro.alayacore.combat.CombatConfig;
 import io.github.cwzmorro.alayacore.divinity.DivinityConfig;
@@ -14,6 +16,7 @@ import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
 import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantConfig;
 import io.github.cwzmorro.alayacore.shield.ShieldConfig;
+import io.github.cwzmorro.alayacore.thrown.ThrownWeaponConfig;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,15 +51,20 @@ public final class AlayaConfig {
 	private static final String CLASH = "clash";
 	private static final String DIVINITY = "divinity";
 	private static final String SHIELDS = "shields";
-	private static final Set<String> OWN_TABLES = Set.of(MANA, RANKS, SERVANTS, CLASSES, PROGRESSION, COMBAT, ABILITIES, CLASH, DIVINITY, SHIELDS);
+	private static final String HELD_BEAMS = "held_beams";
+	private static final String THROWN_WEAPONS = "thrown_weapons";
+	private static final String ARCHER_BOWS = "archer_bows";
+	private static final Set<String> OWN_TABLES = Set.of(MANA, RANKS, SERVANTS, CLASSES, PROGRESSION, COMBAT, ABILITIES, CLASH, DIVINITY, SHIELDS,
+		HELD_BEAMS, THROWN_WEAPONS, ARCHER_BOWS);
 
 	private record Values(ManaConfig mana, RankConfig ranks, ServantConfig servants, ProgressionConfig progression, CombatConfig combat,
-		AbilityConfig abilities, ClashConfig clash, DivinityConfig divinity, ShieldConfig shields) {
+		AbilityConfig abilities, ClashConfig clash, DivinityConfig divinity, ShieldConfig shields, HeldBeamConfig heldBeams,
+		ThrownWeaponConfig thrownWeapons, ArcherBowConfig archerBows) {
 	}
 
 	private static volatile Values values = new Values(ManaConfig.DEFAULTS, RankConfig.DEFAULTS, ServantConfig.DEFAULTS,
 		ProgressionConfig.DEFAULTS, CombatConfig.DEFAULTS, AbilityConfig.DEFAULTS, ClashConfig.DEFAULTS,
-		DivinityConfig.DEFAULTS, ShieldConfig.DEFAULTS);
+		DivinityConfig.DEFAULTS, ShieldConfig.DEFAULTS, HeldBeamConfig.DEFAULTS, ThrownWeaponConfig.DEFAULTS, ArcherBowConfig.DEFAULTS);
 	private static final List<ConfigTable<?>> TABLES = new CopyOnWriteArrayList<>();
 
 	private AlayaConfig() {
@@ -98,11 +106,23 @@ public final class AlayaConfig {
 		return values.shields();
 	}
 
+	public static HeldBeamConfig heldBeams() {
+		return values.heldBeams();
+	}
+
+	public static ThrownWeaponConfig thrownWeapons() {
+		return values.thrownWeapons();
+	}
+
+	public static ArcherBowConfig archerBows() {
+		return values.archerBows();
+	}
+
 	/** Applies synced shield settings on the client for ability descriptions. */
 	public static void useServerShields(ShieldConfig shields) {
 		Values current = values;
 		values = new Values(current.mana(), current.ranks(), current.servants(), current.progression(), current.combat(),
-			current.abilities(), current.clash(), current.divinity(), shields);
+			current.abilities(), current.clash(), current.divinity(), shields, current.heldBeams(), current.thrownWeapons(), current.archerBows());
 	}
 
 	/**
@@ -152,7 +172,10 @@ public final class AlayaConfig {
 				AbilityConfig.read(root.section(ABILITIES, null), cooldownDefaults),
 				ClashConfig.read(root.section(CLASH, null)),
 				DivinityConfig.read(root.section(DIVINITY, DivinityConfig.COMMENT)),
-				ShieldConfig.read(root.section(SHIELDS, null))
+				ShieldConfig.read(root.section(SHIELDS, null)),
+				HeldBeamConfig.read(root.section(HELD_BEAMS, null)),
+				ThrownWeaponConfig.read(root.section(THROWN_WEAPONS, null)),
+				ArcherBowConfig.read(root.section(ARCHER_BOWS, null))
 			);
 			TABLES.forEach(table -> table.read(root));
 		});

@@ -31,6 +31,7 @@
 			"io.github.cwzmorro.alayacore.gametest.AimGameTests",
 			"io.github.cwzmorro.alayacore.gametest.CombatGameTests",
 			"io.github.cwzmorro.alayacore.gametest.LostToVoidGameTests",
+			"io.github.cwzmorro.alayacore.gametest.WeaponGameTests",
 			"io.github.cwzmorro.alayacore.gametest.StartingItemsGameTests"
 		],
 		"fabric-client-gametest": [

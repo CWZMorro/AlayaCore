@@ -138,6 +138,10 @@ public final class Shields {
 		return firstHit(shieldsAround(level, new AABB(from, to)), from, to);
 	}
 
+	public static @Nullable Hit firstHit(ServerLevel level, Vec3 from, Vec3 to, ShieldEntity except) {
+		return firstHit(shieldsAround(level, new AABB(from, to)).stream().filter(shield -> shield != except).toList(), from, to);
+	}
+
 	private static @Nullable Hit firstHit(List<ShieldEntity> shields, Vec3 from, Vec3 to) {
 		Hit first = null;
 		double nearest = Double.POSITIVE_INFINITY;

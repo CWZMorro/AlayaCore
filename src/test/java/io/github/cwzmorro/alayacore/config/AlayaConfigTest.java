@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.cwzmorro.alayacore.ability.AbilityConfig;
+import io.github.cwzmorro.alayacore.beam.HeldBeamConfig;
 import io.github.cwzmorro.alayacore.clash.ClashConfig;
 import io.github.cwzmorro.alayacore.divinity.DivinityConfig;
 import io.github.cwzmorro.alayacore.mana.ManaConfig;
@@ -16,6 +17,7 @@ import io.github.cwzmorro.alayacore.servant.ServantClassConfig;
 import io.github.cwzmorro.alayacore.servant.ServantConfig;
 import io.github.cwzmorro.alayacore.servant.ServantStats;
 import io.github.cwzmorro.alayacore.shield.ShieldConfig;
+import io.github.cwzmorro.alayacore.thrown.ThrownWeaponConfig;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -78,6 +80,8 @@ class AlayaConfigTest {
 		assertEquals(ClashConfig.DEFAULTS, AlayaConfig.clash());
 		assertEquals(DivinityConfig.DEFAULTS, AlayaConfig.divinity());
 		assertEquals(ShieldConfig.DEFAULTS, AlayaConfig.shields());
+		assertEquals(HeldBeamConfig.DEFAULTS, AlayaConfig.heldBeams());
+		assertEquals(ThrownWeaponConfig.DEFAULTS, AlayaConfig.thrownWeapons());
 		assertTrue(written.contains("tap_seconds = 300"), written);
 		assertTrue(written.contains("hold_upkeep_per_second = 5.0"), written);
 		assertTrue(written.contains("winner_continuation_percent = 90.0"), written);

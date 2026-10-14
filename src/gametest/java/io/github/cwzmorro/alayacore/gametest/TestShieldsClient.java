@@ -10,5 +10,6 @@ public final class TestShieldsClient implements ClientModInitializer {
 		EntityRenderers.register(TestShields.DISC, NoopRenderer::new);
 		EntityRenderers.register(TestShields.SOLID_DISC, NoopRenderer::new);
 		EntityRenderers.register(TestShields.DOME, NoopRenderer::new);
+		EntityRenderers.register(TestWeapons.THROWN, NoopRenderer::new);
 	}
 }

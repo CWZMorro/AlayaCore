@@ -20,6 +20,10 @@ public final class AlayaGameRules {
 		.category(GameRuleCategory.PLAYER)
 		.buildAndRegister(AlayaCore.id("grand_title_loss_in_single_player"));
 
+	public static final GameRule<Boolean> WEAPON_BLOCK_DAMAGE = GameRuleBuilder.forBoolean(true)
+		.category(GameRuleCategory.MOBS)
+		.buildAndRegister(AlayaCore.id("weapon_block_damage"));
+
 	private AlayaGameRules() {
 	}
 

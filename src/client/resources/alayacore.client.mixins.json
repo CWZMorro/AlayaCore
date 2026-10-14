@@ -5,6 +5,7 @@
 	"client": [
 		"ClientLanguageMixin",
 		"GuiMixin",
+		"HeldBeamInputMixin",
 		"MouseHandlerMixin"
 	],
 	"injectors": {

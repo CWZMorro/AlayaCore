@@ -34,6 +34,7 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 	// Data-only classes force the contents list onto a second page.
 	public static final ResourceKey<ServantClass> DATA_CLASS = ResourceKey.create(AlayaRegistries.SERVANT_CLASS_KEY, id("test_class_8"));
 	public static final Identifier DATA_CLASS_SERVANT = id("data_class_servant");
+	public static final Identifier BOWMAN = id("bowman");
 
 	static Identifier id(String path) {
 		return Identifier.fromNamespaceAndPath("alayacore-gametest", path);
@@ -44,6 +45,7 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 		TestAbilities.register();
 		TestFoods.register();
 		TestShields.init();
+		TestWeapons.init();
 		TestMarbles.register();
 		TestDeeds.init();
 		for (Identifier id : new Identifier[]{SOLO, CONTESTED, OLD, NEW, IGNORED, FORCED, ANNOUNCED}) {
@@ -66,5 +68,6 @@ public final class TestServants implements ModInitializer, DedicatedServerModIni
 		Registry.register(AlayaRegistries.SERVANT, STARTER, new Servant(ServantClasses.SABER, List.of()));
 		Registry.register(AlayaRegistries.SERVANT, DATA_CLASS_SERVANT, new Servant(DATA_CLASS, List.of()));
 		Registry.register(AlayaRegistries.SERVANT, RELENTLESS, new Servant(ServantClasses.SABER, List.of()).meleeIgnoringHitCooldown());
+		Registry.register(AlayaRegistries.SERVANT, BOWMAN, new Servant(ServantClasses.ARCHER, List.of()));
 	}
 }
