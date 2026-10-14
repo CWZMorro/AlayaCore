@@ -17,6 +17,7 @@ public class SkillEffectsGameTests {
 	private static final Identifier MODIFIER = TestServants.id("effect_boost");
 	private static final int POTION_TICKS = 6000;
 	private static final int SKILL_TICKS = 200;
+	private static final int REFRESH_DELAY_TICKS = 10;
 	private static final double BONUS = 0.5;
 
 	@GameTest
@@ -31,6 +32,32 @@ public class SkillEffectsGameTests {
 		SkillEffects.take(entity, SKILL, MobEffects.SPEED);
 		check(helper, "taking again does nothing", true, entity.getEffect(MobEffects.SPEED) == left);
 		helper.succeed();
+	}
+
+	@GameTest
+	public void aLaterStrongerPotionIsLeftAloneWhenTheSkillEnds(GameTestHelper helper) {
+		LivingEntity entity = helper.spawn(EntityType.COW, TestPlayers.INSIDE);
+		SkillEffects.give(entity, SKILL, new MobEffectInstance(MobEffects.SPEED, SKILL_TICKS, 0));
+		entity.addEffect(new MobEffectInstance(MobEffects.SPEED, POTION_TICKS, 1));
+		MobEffectInstance potion = entity.getEffect(MobEffects.SPEED);
+		SkillEffects.take(entity, SKILL, MobEffects.SPEED);
+		check(helper, "the stronger, longer potion stays as it was", true, entity.getEffect(MobEffects.SPEED) == potion && potion.getAmplifier() == 1);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aRefreshedSkillStillGivesBackWhatItFirstDisplaced(GameTestHelper helper) {
+		LivingEntity entity = helper.spawn(EntityType.COW, TestPlayers.INSIDE);
+		entity.addEffect(new MobEffectInstance(MobEffects.SPEED, POTION_TICKS, 0));
+		SkillEffects.give(entity, SKILL, new MobEffectInstance(MobEffects.SPEED, SKILL_TICKS, 1));
+		helper.runAfterDelay(REFRESH_DELAY_TICKS, () -> {
+			SkillEffects.give(entity, SKILL, new MobEffectInstance(MobEffects.SPEED, SKILL_TICKS, 1));
+			SkillEffects.take(entity, SKILL, MobEffects.SPEED);
+			MobEffectInstance left = entity.getEffect(MobEffects.SPEED);
+			check(helper, "the potion's effect is back after the refresh", true,
+				left != null && left.getAmplifier() == 0 && left.getDuration() > POTION_TICKS - SKILL_TICKS);
+			helper.succeed();
+		});
 	}
 
 	@GameTest

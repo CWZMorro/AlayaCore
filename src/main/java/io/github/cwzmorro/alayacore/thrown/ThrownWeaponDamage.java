@@ -1,5 +1,7 @@
 package io.github.cwzmorro.alayacore.thrown;
 
+import io.github.cwzmorro.alayacore.combat.Attacks;
+import io.github.cwzmorro.alayacore.combat.HitCooldown;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.item.WeaponStats;
 import io.github.cwzmorro.alayacore.shield.Shields;
@@ -34,9 +36,7 @@ import org.jspecify.annotations.Nullable;
  * Applies thrown weapon damage, enchantments and durability wear, including spear speed and mace fall bonuses.
  */
 public final class ThrownWeaponDamage {
-	public static final int VANILLA_HIT_IMMUNITY_TICKS = 10;
-	// What vanilla sets invulnerableTime to on a hit; hits are refused while it is above VANILLA_HIT_IMMUNITY_TICKS.
-	private static final int INVULNERABLE_TIME_ON_HIT = 2 * VANILLA_HIT_IMMUNITY_TICKS;
+	public static final int VANILLA_HIT_IMMUNITY_TICKS = HitCooldown.FULL_TICKS / 2;
 	// Vanilla's mace curve ({@code MaceItem.getAttackDamageBonus}, kept there in local literals): this much a block of fall up to
 	// the first height, then less, then less again.
 	private static final double MACE_FIRST_HEIGHT = 3.0;
@@ -63,10 +63,10 @@ public final class ThrownWeaponDamage {
 		LivingEntity owner = Owners.find(level, thrown.owner());
 		ServerPlayer player = owner instanceof ServerPlayer thrower ? thrower : null;
 		ItemStack weapon = thrown.item().copy();
-		DamageSource source = new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(thrown.damageType()), thrown, owner);
+		DamageSource source = new DamageSource(Attacks.damageType(level, thrown.damageType()), thrown, owner);
 		Float fixed = thrown.fixedDamage();
 		float damage = fixed != null ? fixed : damage(level, weapon, target, source, velocity, thrown.thrownFromY() - thrown.getY());
-		if (target.invulnerableTime <= INVULNERABLE_TIME_ON_HIT - AlayaConfig.thrownWeapons().hitImmunityTicks()) {
+		if (target.invulnerableTime <= HitCooldown.FULL_TICKS - AlayaConfig.thrownWeapons().hitImmunityTicks()) {
 			target.invulnerableTime = 0;
 		}
 		boolean hurt = shield == null ? target.hurtServer(level, source, damage) : shield.shield().hurtAt(level, source, damage, shield.entry());

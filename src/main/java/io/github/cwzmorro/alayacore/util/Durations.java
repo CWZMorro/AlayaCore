@@ -1,6 +1,5 @@
 package io.github.cwzmorro.alayacore.util;
 
-import java.util.Locale;
 import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
 
@@ -15,13 +14,9 @@ public final class Durations {
 		return Math.max(1, (int) Math.round(seconds * SharedConstants.TICKS_PER_SECOND));
 	}
 
-	public static String tenths(double seconds) {
-		return String.format(Locale.ROOT, "%.1f", seconds);
-	}
-
 	public static Component text(int seconds) {
 		return seconds % SECONDS_PER_MINUTE == 0
-			? Component.translatable("alayacore.duration.minutes", seconds / SECONDS_PER_MINUTE)
-			: Component.translatable("alayacore.duration.seconds", seconds);
+			? Component.translatable("duration.alayacore.minutes", seconds / SECONDS_PER_MINUTE)
+			: Component.translatable("duration.alayacore.seconds", seconds);
 	}
 }

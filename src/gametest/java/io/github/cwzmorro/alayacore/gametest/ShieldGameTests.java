@@ -3,6 +3,7 @@ package io.github.cwzmorro.alayacore.gametest;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.join;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAsHuman;
+import static io.github.cwzmorro.alayacore.gametest.TestShields.shield;
 
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.combat.AttackData;
@@ -50,7 +51,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class ShieldGameTests {
-	private static final Vec3 SHIELD = new Vec3(4.5, 2.0, 4.5);
+	private static final Vec3 SHIELD = TestShields.SPOT;
 	private static final BlockPos BEHIND = new BlockPos(4, 1, 2);
 	private static final BlockPos IN_FRONT = new BlockPos(4, 1, 6);
 	private static final BlockPos OUTSIDE = new BlockPos(4, 1, 0);
@@ -72,14 +73,6 @@ public class ShieldGameTests {
 	private static final Vec3 THROUGH = new Vec3(0, 0, -4);
 	private static final double OVERLAP = 0.1;
 	private static final int PUSH_TICKS = 5;
-
-	private static <T extends ShieldEntity> T shield(GameTestHelper helper, EntityType<T> type, Rank rank) {
-		T shield = helper.spawn(type, SHIELD);
-		shield.setYRot(0.0F);
-		shield.setXRot(0.0F);
-		shield.deploy(rank);
-		return shield;
-	}
 
 	private static Husk mob(GameTestHelper helper, BlockPos pos) {
 		Husk mob = helper.spawn(EntityType.HUSK, pos);

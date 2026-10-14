@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.TagKey;
@@ -34,7 +33,7 @@ public final class ContinuousSource extends DamageSource {
 	}
 
 	public static ContinuousSource of(Level level, ResourceKey<DamageType> type, @Nullable Entity direct, @Nullable Entity causing) {
-		return new ContinuousSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(type), direct, causing);
+		return new ContinuousSource(Attacks.damageType(level, type), direct, causing);
 	}
 
 	public static float perTick(double perSecond) {
@@ -54,7 +53,7 @@ public final class ContinuousSource extends DamageSource {
 		if (!(source instanceof ContinuousSource)) {
 			return damage;
 		}
-		Entity attacker = source.getDirectEntity() != null ? source.getDirectEntity() : source.getEntity();
+		Entity attacker = Attacks.dealer(source);
 		UUID attack = attacker == null ? NO_ATTACKER : attacker.getUUID();
 		long now = victim.level().getGameTime();
 		Map<UUID, Long> worn = victim.getAttachedOrCreate(ARMOR_WORN);

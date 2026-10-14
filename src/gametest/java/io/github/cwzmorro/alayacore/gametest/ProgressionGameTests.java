@@ -356,7 +356,7 @@ public class ProgressionGameTests {
 
 	@GameTest
 	public void trueNameItemAwakensOnlyTheCurrentServant(GameTestHelper helper) {
-		TestPlayers.release(helper.getLevel().getServer(), TestServants.ARCHER, TestServants.SOLO);
+		release(helper.getLevel().getServer(), TestServants.ARCHER, TestServants.SOLO);
 		ServerPlayer player = join(helper);
 		ServantSelection.choose(player, human());
 		player.setGameMode(GameType.SURVIVAL);
@@ -366,7 +366,7 @@ public class ProgressionGameTests {
 		check(helper, "human keeps item", PROMOTIONS, player.getOffhandItem().getCount());
 
 		ServantSelection.open(player);
-		ServantSelection.choose(player, TestPlayers.servant(TestServants.ARCHER));
+		ServantSelection.choose(player, servant(TestServants.ARCHER));
 		double maxMana = AlayaMana.get(player).max();
 		check(helper, "not awakened before use", false, TrueName.isRealized(player));
 		player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND);
@@ -383,13 +383,13 @@ public class ProgressionGameTests {
 		check(helper, "repeat keeps item", PROMOTIONS - 1, player.getOffhandItem().getCount());
 
 		ServantSelection.open(player);
-		ServantSelection.choose(player, TestPlayers.servant(TestServants.SOLO));
+		ServantSelection.choose(player, servant(TestServants.SOLO));
 		check(helper, "another servant not awakened", false, TrueName.isRealized(player));
 		check(helper, "missing awakening refused", InteractionResult.FAIL,
 			player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND));
 		check(helper, "missing awakening keeps item", PROMOTIONS - 1, player.getOffhandItem().getCount());
 		ServantSelection.open(player);
-		ServantSelection.choose(player, TestPlayers.servant(TestServants.ARCHER));
+		ServantSelection.choose(player, servant(TestServants.ARCHER));
 		TrueName.unrealize(player);
 		player.setGameMode(GameType.CREATIVE);
 		player.getOffhandItem().use(player.level(), player, InteractionHand.OFF_HAND);

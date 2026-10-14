@@ -3,6 +3,7 @@ package io.github.cwzmorro.alayacore.shield;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.github.cwzmorro.alayacore.rank.Rank;
+import net.minecraft.SharedConstants;
 import org.junit.jupiter.api.Test;
 
 class ShieldRulesTest {
@@ -21,6 +22,11 @@ class ShieldRulesTest {
 		assertEquals(425.0, ShieldRules.hpAfterHit(Rank.parse("C"), A, 525, 100), EPS);
 		assertEquals(425.0, ShieldRules.hpAfterHit(null, A, 525, 100), EPS);
 		assertEquals(0.0, ShieldRules.hpAfterHit(null, A, 50, 100), EPS);
+	}
+
+	@Test
+	void aTappedShieldStaysFiveMinutes() {
+		assertEquals(300 * SharedConstants.TICKS_PER_SECOND, ShieldConfig.DEFAULTS.tapTicks());
 	}
 
 	@Test

@@ -1,0 +1,4 @@
+{
+	"group": "alayacore-gametest:test_group",
+	"tables": ["alayacore-gametest:chests/first"]
+}

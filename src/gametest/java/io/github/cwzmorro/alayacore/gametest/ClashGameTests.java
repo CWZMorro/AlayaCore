@@ -4,7 +4,6 @@ import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 
 import io.github.cwzmorro.alayacore.api.AlayaMana;
 import io.github.cwzmorro.alayacore.clash.BeamClashes;
-import io.github.cwzmorro.alayacore.clash.ClashBeam;
 import io.github.cwzmorro.alayacore.combat.AttackData;
 import io.github.cwzmorro.alayacore.combat.Attacks;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
@@ -13,10 +12,7 @@ import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.zombie.Husk;
 import net.minecraft.world.phys.Vec3;
 
@@ -117,72 +113,6 @@ public class ClashGameTests {
 		AlayaMana.getOrCreate(entity);
 		AlayaMana.update(entity, mana -> mana.withMax(MANA).withCurrent(MANA));
 		entity.setAttached(Attacks.ATTACK, new AttackData(entity.getUUID(), Rank.parse(rank), canClash, true));
-		return new TestBeam(entity, entity.position(), direction);
-	}
-
-	private static final class TestBeam implements ClashBeam {
-		private final Husk entity;
-		private final Vec3 origin;
-		private final Vec3 direction;
-		private boolean held = true;
-		private double hitReach;
-		private int effects;
-
-		private TestBeam(Husk entity, Vec3 origin, Vec3 direction) {
-			this.entity = entity;
-			this.origin = origin;
-			this.direction = direction;
-		}
-
-		@Override
-		public Entity beamEntity() {
-			return this.entity;
-		}
-
-		@Override
-		public Vec3 beamOrigin() {
-			return this.origin;
-		}
-
-		@Override
-		public Vec3 beamDirection() {
-			return this.direction;
-		}
-
-		@Override
-		public double beamLength() {
-			return LENGTH;
-		}
-
-		@Override
-		public double beamRadius() {
-			return RADIUS;
-		}
-
-		@Override
-		public LivingEntity beamOwner() {
-			return this.entity;
-		}
-
-		@Override
-		public double beamDrainPerSecond() {
-			return DRAIN;
-		}
-
-		@Override
-		public boolean beamLive() {
-			return this.held;
-		}
-
-		@Override
-		public void loseClash() {
-			this.held = false;
-		}
-
-		@Override
-		public void beamEffects(ServerLevel level) {
-			this.hitReach = BeamClashes.reach(this.entity, LENGTH);
-			this.effects++;
-		}
+		return new TestBeam(entity, entity.position(), direction, LENGTH, RADIUS, DRAIN);
 	}
 }

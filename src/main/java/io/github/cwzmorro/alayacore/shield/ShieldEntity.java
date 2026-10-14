@@ -123,8 +123,7 @@ public abstract class ShieldEntity extends Entity {
 		if (this.isRemoved()) {
 			return false;
 		}
-		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-			this.discard();
+		if (this.destroyedBy(source)) {
 			return true;
 		}
 		float added = this.beyondThisTick(level.getGameTime(), source, amount);
@@ -151,8 +150,7 @@ public abstract class ShieldEntity extends Entity {
 
 	@Override
 	public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
-		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-			this.discard();
+		if (this.destroyedBy(source)) {
 			return true;
 		}
 		if (this.projectileImpact != null) {
@@ -259,13 +257,21 @@ public abstract class ShieldEntity extends Entity {
 		this.entityData.set(DATA_HP, (float) hp);
 	}
 
+	private boolean destroyedBy(DamageSource source) {
+		if (!source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+			return false;
+		}
+		this.discard();
+		return true;
+	}
+
 	// Area attacks can hit several sheltered targets; count only their largest hit against the shield.
 	private float beyondThisTick(long now, DamageSource source, float amount) {
 		if (this.takenTick != now) {
 			this.takenThisTick.clear();
 			this.takenTick = now;
 		}
-		Entity from = source.getDirectEntity() != null ? source.getDirectEntity() : source.getEntity();
+		Entity from = Attacks.dealer(source);
 		Object dealer = from != null ? from : source.sourcePositionRaw();
 		if (dealer == null) {
 			return amount;

@@ -25,14 +25,12 @@ public final class SkillEffects {
 	// Vanilla's Regeneration heals every this many ticks at level I, twice as often each level up (the literal
 	// 50 >> amplification in RegenerationMobEffect.shouldApplyEffectTickThisTick).
 	public static final int REGENERATION_PERIOD_TICKS = 50;
-
-	private record Applied(long start, int amplifier, int duration, long priorAt, List<MobEffectInstance> prior) { }
-
 	private static final AttachmentType<Map<String, Applied>> APPLIED = AttachmentRegistry.create(AlayaCore.id("skill_effects"));
 	// The effect's countdown and the game clock are read at different points of a tick, so they may differ by this much.
 	private static final int CLOCK_TOLERANCE_TICKS = 1;
 
-	private SkillEffects() { }
+	private SkillEffects() {
+	}
 
 	/** Applies {@code effect} to {@code entity} for {@code skill}; call again to refresh it (the first call's prior chain is kept). */
 	public static void give(LivingEntity entity, Identifier skill, MobEffectInstance effect) {
@@ -121,5 +119,8 @@ public final class SkillEffects {
 
 	private static MobEffectInstance plain(MobEffectInstance node, int duration) {
 		return new MobEffectInstance(node.getEffect(), duration, node.getAmplifier(), node.isAmbient(), node.isVisible(), node.showIcon());
+	}
+
+	private record Applied(long start, int amplifier, int duration, long priorAt, List<MobEffectInstance> prior) {
 	}
 }

@@ -13,4 +13,18 @@ class NumbersTest {
 		assertEquals("7", String.valueOf(Numbers.shown(7)));
 		assertEquals("B", Numbers.shown("B"));
 	}
+
+	@Test
+	void tenthsAlwaysHaveOneDecimal() {
+		assertEquals("1.5", Numbers.tenths(1.5));
+		assertEquals("20.0", Numbers.tenths(20.0));
+		assertEquals("0.1", Numbers.tenths(0.06));
+	}
+
+	@Test
+	void plainTextHasNoTrailingZerosOrExponent() {
+		assertEquals("50", Numbers.plain(50.0));
+		assertEquals("0.7", Numbers.plain(0.7));
+		assertEquals("10000000", Numbers.plain(1.0E7));
+	}
 }

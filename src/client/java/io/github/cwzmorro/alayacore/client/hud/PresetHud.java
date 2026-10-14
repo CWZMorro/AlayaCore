@@ -7,7 +7,7 @@ import io.github.cwzmorro.alayacore.ability.AbilityPresets;
 import io.github.cwzmorro.alayacore.ability.AbilityStorage;
 import io.github.cwzmorro.alayacore.client.input.AbilityKeys;
 import io.github.cwzmorro.alayacore.config.ClientConfig;
-import io.github.cwzmorro.alayacore.util.Durations;
+import io.github.cwzmorro.alayacore.util.Numbers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +32,7 @@ public final class PresetHud {
 	private static final int TEXT = 0xFFFFFFFF;
 	private static final int SUBTEXT = 0xFFAAAAAA;
 	private static final int COOLDOWN = 0xAA0000;
-	public static final Component EMPTY_SLOT = Component.translatable("alayacore.hud.empty_slot");
+	public static final Component EMPTY_SLOT = Component.translatable("hud.alayacore.empty_slot");
 
 	private PresetHud() {
 	}
@@ -48,7 +48,8 @@ public final class PresetHud {
 		Minecraft minecraft = Minecraft.getInstance();
 		LocalPlayer player = minecraft.player;
 		float opacity = ClientConfig.presetHudOpacity();
-		if (opacity <= 0.0F || player == null || player.isSpectator() || minecraft.getDebugOverlay().showDebugScreen() || Abilities.owned(player).stream().map(ResourceKey::identifier).noneMatch(Ability::listed)) {
+		if (opacity <= 0.0F || player == null || player.isSpectator() || minecraft.getDebugOverlay().showDebugScreen()
+			|| Abilities.owned(player).stream().map(ResourceKey::identifier).noneMatch(Ability::listed)) {
 			return;
 		}
 		AbilityPresets presets = player.getAttachedOrElse(AbilityStorage.PRESETS, AbilityPresets.EMPTY);
@@ -94,7 +95,7 @@ public final class PresetHud {
 		}
 		if (cooldown > 0.0) {
 			detail.append(hasModes ? " " : "")
-				.append(Component.translatable("alayacore.hud.cooldown", Durations.tenths(cooldown)).withColor(COOLDOWN));
+				.append(Component.translatable("hud.alayacore.cooldown", Numbers.tenths(cooldown)).withColor(COOLDOWN));
 		}
 		return detail;
 	}

@@ -8,8 +8,8 @@ import io.github.cwzmorro.alayacore.mana.ManaRules;
 import io.github.cwzmorro.alayacore.progression.ClassGrade;
 import io.github.cwzmorro.alayacore.progression.ClassGrades;
 import io.github.cwzmorro.alayacore.servant.ServantClass;
+import io.github.cwzmorro.alayacore.util.Numbers;
 import io.github.cwzmorro.alayacore.util.Percent;
-import java.util.Locale;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.DeltaTracker;
@@ -152,7 +152,7 @@ public final class ServantHud {
 		float health = player.getHealth();
 		float maxHealth = player.getMaxHealth();
 		bar(graphics, HEALTH_BAR, HEALTH_BAR_FILL, x, y, HEALTH_WIDTH, HEALTH_HEIGHT, maxHealth > 0 ? health / maxHealth : 0);
-		centered(graphics, font, Component.translatable("alayacore.hud.health", tenths(health), tenths(maxHealth)), x, y, HEALTH_WIDTH,
+		centered(graphics, font, Component.translatable("hud.alayacore.health", Numbers.tenths(health), Numbers.tenths(maxHealth)), x, y, HEALTH_WIDTH,
 			HEALTH_HEIGHT);
 
 		ManaData mana = AlayaMana.get(player);
@@ -160,13 +160,9 @@ public final class ServantHud {
 			y += HEALTH_HEIGHT;
 			double fraction = ManaRules.fraction(mana);
 			bar(graphics, MANA_BAR, MANA_BAR_FILL, x, y, MANA_WIDTH, MANA_HEIGHT, fraction);
-			centered(graphics, font, Component.translatable("alayacore.hud.mana", Math.round(Percent.fromFraction(fraction))), x, y, MANA_WIDTH,
+			centered(graphics, font, Component.translatable("hud.alayacore.mana", Math.round(Percent.fromFraction(fraction))), x, y, MANA_WIDTH,
 				MANA_HEIGHT);
 		}
-	}
-
-	private static String tenths(float hp) {
-		return String.format(Locale.ROOT, "%.1f", hp);
 	}
 
 	private static void bar(GuiGraphicsExtractor graphics, Identifier background, Identifier fill, int x, int y, int width, int height, double ratio) {

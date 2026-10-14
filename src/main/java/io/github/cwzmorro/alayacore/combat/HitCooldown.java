@@ -14,7 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public final class HitCooldown {
 	// Vanilla's hit cooldown after a full hit, in ticks. While more than half of it is left, a hit only adds what it exceeds the last.
-	private static final int FULL_TICKS = 20;
+	public static final int FULL_TICKS = 20;
 
 	private HitCooldown() {
 	}

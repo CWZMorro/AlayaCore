@@ -8,7 +8,7 @@ import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.network.AbilityKeyPayload;
 import io.github.cwzmorro.alayacore.progression.TrueName;
 import io.github.cwzmorro.alayacore.servant.Servant;
-import io.github.cwzmorro.alayacore.util.Durations;
+import io.github.cwzmorro.alayacore.util.Numbers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -173,7 +173,7 @@ public final class Abilities {
 	static void refuse(LivingEntity entity, AbilityRules.Refusal reason, double secondsLeft) {
 		if (entity instanceof ServerPlayer player) {
 			player.sendOverlayMessage(reason == AbilityRules.Refusal.ON_COOLDOWN
-				? Component.translatable(reason.translationKey(), Durations.tenths(secondsLeft))
+				? Component.translatable(reason.translationKey(), Numbers.tenths(secondsLeft))
 				: Component.translatable(reason.translationKey()));
 		}
 	}

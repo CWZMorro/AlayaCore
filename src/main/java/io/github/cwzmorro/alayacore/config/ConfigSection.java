@@ -18,6 +18,8 @@ import org.jspecify.annotations.Nullable;
  * the saved file. A missing key gets its default; an invalid value falls back to it with a warning.
  */
 public final class ConfigSection {
+	private static final String NOT_A_RANK = "must be a rank from E to EX++";
+
 	private final @Nullable UnmodifiableConfig input;
 	private final CommentedConfig output;
 	private final String path;
@@ -61,10 +63,10 @@ public final class ConfigSection {
 			try {
 				value = Rank.parse(text);
 			} catch (IllegalArgumentException e) {
-				this.warn(key, "must be a rank from E to EX++");
+				this.warn(key, NOT_A_RANK);
 			}
 		} else if (raw != null) {
-			this.warn(key, "must be a rank from E to EX++");
+			this.warn(key, NOT_A_RANK);
 		}
 		this.write(key, comment, value.toString());
 		return value;

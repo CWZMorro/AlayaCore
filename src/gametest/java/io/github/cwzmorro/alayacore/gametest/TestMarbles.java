@@ -84,7 +84,8 @@ final class TestMarbles {
 		}
 	}
 
-	record Opening(RealityMarbles.Verdict verdict, @Nullable TestMarble marble) { }
+	record Opening(RealityMarbles.Verdict verdict, @Nullable TestMarble marble) {
+	}
 
 	static void register() {
 		RealityMarbles.register(server -> List.copyOf(OPEN));

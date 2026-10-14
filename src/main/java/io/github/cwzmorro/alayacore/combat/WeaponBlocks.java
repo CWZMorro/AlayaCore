@@ -1,5 +1,6 @@
 package io.github.cwzmorro.alayacore.combat;
 
+import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
 import io.github.cwzmorro.alayacore.marble.RealityMarbles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -11,15 +12,19 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 /**
  * What any weapon ability may destroy (never what a reality marble protects or what cannot be broken), and destroying it without
- * drops. Whether it may at all is the game rule {@link io.github.cwzmorro.alayacore.gamerule.AlayaGameRules#WEAPON_BLOCK_DAMAGE}.
+ * drops. Whether it may at all is {@link #allowed}.
  */
 public final class WeaponBlocks {
 	private WeaponBlocks() {
 	}
 
+	public static boolean allowed(ServerLevel level) {
+		return level.getGameRules().get(AlayaGameRules.WEAPON_BLOCK_DAMAGE);
+	}
+
 	public static boolean breakable(ServerLevel level, BlockPos pos) {
 		BlockState state = level.getBlockState(pos);
-		return !RealityMarbles.protects(level, pos) &&!state.isAir() && state.getDestroySpeed(level, pos) >= 0;
+		return !RealityMarbles.protects(level, pos) && !state.isAir() && state.getDestroySpeed(level, pos) >= 0;
 	}
 
 	public static void breakWithoutDrops(ServerLevel level, BlockPos pos) {

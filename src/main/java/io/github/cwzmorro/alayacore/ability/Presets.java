@@ -37,9 +37,7 @@ public final class Presets {
 	}
 
 	public static void setSlot(ServerPlayer player, int preset, int slot, Optional<Identifier> ability) {
-		if (AbilityPresets.isValid(preset, slot)
-			&& ability.map(id -> Abilities.owns(player, id) && AlayaRegistries.ABILITY.getOptional(id).map(owned -> !owned.passive()).orElse(true))
-				.orElse(true)) {
+		if (AbilityPresets.isValid(preset, slot) && ability.map(id -> Abilities.owns(player, id) && Ability.listed(id)).orElse(true)) {
 			player.setAttached(AbilityStorage.PRESETS, get(player).with(preset, slot, ability));
 		}
 	}

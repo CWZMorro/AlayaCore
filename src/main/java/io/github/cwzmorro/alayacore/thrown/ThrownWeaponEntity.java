@@ -2,8 +2,8 @@ package io.github.cwzmorro.alayacore.thrown;
 
 import com.mojang.serialization.Codec;
 import io.github.cwzmorro.alayacore.combat.AttackTags;
+import io.github.cwzmorro.alayacore.combat.WeaponBlocks;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
-import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
 import io.github.cwzmorro.alayacore.shield.Shields;
 import java.util.UUID;
 import net.fabricmc.fabric.api.event.Event;
@@ -218,6 +218,7 @@ public class ThrownWeaponEntity extends Entity {
 		return this.entityData.get(DATA_FORMATION);
 	}
 
+	/** Returns formation progress from 0 to 1, or 1 if no formation was set. */
 	public float formation(float partialTick) {
 		int duration = this.entityData.get(DATA_FORMATION_DURATION);
 		return duration == 0 ? 1 : Math.min(1, (duration - this.formationRemaining() + partialTick) / duration);
@@ -392,7 +393,7 @@ public class ThrownWeaponEntity extends Entity {
 			if (this.blastPower > 0) {
 				Vec3 point = block.getLocation();
 				level.explode(this, point.x, point.y, point.z, this.blastPower,
-					level.getGameRules().get(AlayaGameRules.WEAPON_BLOCK_DAMAGE) ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE);
+					WeaponBlocks.allowed(level) ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE);
 			}
 			this.forget(level);
 			this.discard();

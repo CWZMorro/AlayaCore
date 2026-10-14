@@ -5,26 +5,27 @@ import static io.github.cwzmorro.alayacore.gametest.TestPlayers.check;
 import io.github.cwzmorro.alayacore.beam.BeamVolume;
 import io.github.cwzmorro.alayacore.beam.HeldBeam;
 import io.github.cwzmorro.alayacore.bow.ArcherBows;
-import io.github.cwzmorro.alayacore.clash.ClashBeam;
 import io.github.cwzmorro.alayacore.combat.DashMovement;
 import io.github.cwzmorro.alayacore.combat.ForcedAdvance;
+import io.github.cwzmorro.alayacore.combat.HitCooldown;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.gamerule.AlayaGameRules;
 import io.github.cwzmorro.alayacore.item.WeaponRules;
+import io.github.cwzmorro.alayacore.item.WeaponStats;
 import io.github.cwzmorro.alayacore.rank.Rank;
 import io.github.cwzmorro.alayacore.thrown.ThrownWeaponEntity;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.zombie.Husk;
 import net.minecraft.world.item.BowItem;
@@ -35,11 +36,12 @@ import net.minecraft.world.phys.Vec3;
 
 public class WeaponGameTests {
 	// The disc shield stands here facing south (+Z); the beam comes from the south, north along -Z, at the shield's middle.
-	private static final Vec3 SHIELD = new Vec3(4.5, 2.0, 4.5);
+	private static final Vec3 SHIELD = TestShields.SPOT;
 	private static final Vec3 BEAM_ORIGIN = new Vec3(4.5, 2.5, 7.5);
 	private static final Vec3 NORTH = new Vec3(0, 0, -1);
 	private static final double BEAM_LENGTH = 7.0;
 	private static final double BEAM_RADIUS = 1.0;
+	private static final double NO_DRAIN = 0.0;
 	private static final double CARVE_RADIUS = 0.5;
 	private static final BlockPos IN_FRONT = new BlockPos(4, 1, 6);
 	private static final BlockPos BEHIND = new BlockPos(4, 1, 2);
@@ -47,16 +49,21 @@ public class WeaponGameTests {
 	private static final BlockPos SPARED = new BlockPos(4, 2, 3);
 	private static final Rank RANK = Rank.parse("B");
 	private static final float DAMAGE = 5.0F;
+	private static final float BARE_HEALTH = 100.0F;
 	private static final BlockPos THROWER = new BlockPos(3, 1, 0);
 	private static final BlockPos TARGET = new BlockPos(3, 1, 3);
 	private static final Vec3 THROWN_FROM = new Vec3(3.5, 2.5, 1.5);
 	private static final Vec3 THROWN_VELOCITY = new Vec3(0, 0, 3);
+	private static final Vec3 SHIELD_THROWN_FROM = new Vec3(4.5, 2.5, 6.5);
+	private static final Vec3 SHIELD_THROWN_VELOCITY = new Vec3(0, 0, -3);
+	private static final double MACE_FALL_HEIGHT = 4.5;
+	private static final Vec3 MACE_DROP = new Vec3(0, -3, 0);
+	private static final BlockPos DASH_FROM_SOUTH = new BlockPos(4, 1, 7);
+	private static final Vec3 DASH_NORTH = new Vec3(0, 0, -5);
 	private static final BlockPos DASHER = new BlockPos(1, 1, 1);
 	private static final int WALL_Z = 4;
 	private static final Vec3 DASH = new Vec3(0, 0, 5);
 	private static final double DASH_STEP = 0.5;
-	// Where the dash stops short of the wall: the last whole step before the body would touch it.
-	private static final double STOPPED_AT = 2.0;
 	private static final double CLOSE = 0.01;
 	private static final double ADVANCE_SPEED = 0.25;
 	private static final int ADVANCE_TICKS = 4;
@@ -68,6 +75,20 @@ public class WeaponGameTests {
 		mob.setNoAi(true);
 		mob.setNoGravity(true);
 		return mob;
+	}
+
+	private static Husk bare(Husk mob) {
+		mob.getAttribute(Attributes.ARMOR).setBaseValue(0);
+		mob.getAttribute(Attributes.MAX_HEALTH).setBaseValue(BARE_HEALTH);
+		mob.setHealth(BARE_HEALTH);
+		return mob;
+	}
+
+	private static ThrownWeaponEntity throwAt(GameTestHelper helper, Husk thrower, ItemStack item, Vec3 from, Vec3 velocity) {
+		ThrownWeaponEntity weapon = ThrownWeaponEntity.launch(helper.getLevel(), TestWeapons.THROWN, thrower, item, helper.absoluteVec(from), velocity,
+			DamageTypes.TRIDENT);
+		weapon.tick();
+		return weapon;
 	}
 
 	@GameTest
@@ -92,17 +113,14 @@ public class WeaponGameTests {
 	@GameTest
 	public void aHeldBeamStopsAtAShieldAndHitsAndCarvesOnlyInFrontOfIt(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
-		TestShields.TestShield shield = helper.spawn(TestShields.DISC, SHIELD);
-		shield.setYRot(0.0F);
-		shield.setXRot(0.0F);
-		shield.deploy(RANK);
+		TestShields.TestShield shield = TestShields.shield(helper, TestShields.DISC, RANK);
 		Husk caster = mob(helper, new BlockPos(0, 1, 7));
 		Husk inFront = mob(helper, IN_FRONT);
 		Husk behind = mob(helper, BEHIND);
 		helper.setBlock(CARVED, Blocks.STONE);
 		helper.setBlock(SPARED, Blocks.STONE);
 		Vec3 origin = helper.absoluteVec(BEAM_ORIGIN);
-		TestBeam beam = new TestBeam(caster, origin);
+		TestBeam beam = new TestBeam(caster, origin, NORTH, BEAM_LENGTH, BEAM_RADIUS, NO_DRAIN);
 
 		HeldBeam.Clip clip = HeldBeam.clip(level, beam);
 		check(helper, "the beam ends where it enters the shield", true, clip.shield() != null);
@@ -123,9 +141,7 @@ public class WeaponGameTests {
 	public void aThrownWeaponStrikesWithItsOwnAttackAndIsUsedUp(GameTestHelper helper) {
 		Husk thrower = mob(helper, THROWER);
 		Husk target = mob(helper, TARGET);
-		ThrownWeaponEntity weapon = ThrownWeaponEntity.launch(helper.getLevel(), TestWeapons.THROWN, thrower, new ItemStack(Items.IRON_SWORD),
-			helper.absoluteVec(THROWN_FROM), THROWN_VELOCITY, DamageTypes.TRIDENT);
-		weapon.tick();
+		ThrownWeaponEntity weapon = throwAt(helper, thrower, new ItemStack(Items.IRON_SWORD), THROWN_FROM, THROWN_VELOCITY);
 		DamageSource source = target.getLastDamageSource();
 		check(helper, "the target is struck", true, target.getHealth() < target.getMaxHealth());
 		check(helper, "as its launcher's damage type, by its thrower and itself", true,
@@ -136,29 +152,75 @@ public class WeaponGameTests {
 	}
 
 	@GameTest
-	public void aDashStopsAtAWallOrCarvesThroughIt(GameTestHelper helper) {
-		ServerLevel level = helper.getLevel();
-		check(helper, "weapons break blocks by default", true, level.getGameRules().get(AlayaGameRules.WEAPON_BLOCK_DAMAGE));
-		BlockPos low = new BlockPos(DASHER.getX(), DASHER.getY(), WALL_Z);
-		BlockPos high = low.above();
-		helper.setBlock(low, Blocks.STONE);
-		helper.setBlock(high, Blocks.STONE);
-		Husk dasher = mob(helper, DASHER);
-		Vec3 start = dasher.position();
+	public void aThrownWeaponIsStoppedByAShieldInsteadOfFlyingThrough(GameTestHelper helper) {
+		TestShields.TestShield shield = TestShields.shield(helper, TestShields.DISC, RANK);
+		Husk thrower = mob(helper, THROWER);
+		Husk behind = mob(helper, BEHIND);
+		ThrownWeaponEntity weapon = throwAt(helper, thrower, new ItemStack(Items.IRON_SWORD), SHIELD_THROWN_FROM, SHIELD_THROWN_VELOCITY);
+		check(helper, "the shield takes it", 1, shield.hits);
+		check(helper, "used up where it meets the shield", true, weapon.isRemoved());
+		check(helper, "what is behind is not struck", behind.getMaxHealth(), behind.getHealth());
+		helper.succeed();
+	}
 
-		DashMovement.advance(level, dasher, DASH, DASH_STEP, false);
-		check(helper, "stopped short of the wall", STOPPED_AT, dasher.position().distanceTo(start));
-		check(helper, "the wall stands", true, helper.getBlockState(low).is(Blocks.STONE) && helper.getBlockState(high).is(Blocks.STONE));
+	@GameTest
+	public void aThrownWeaponHitsAgainAfterItsOwnShortImmunityNotVanillas(GameTestHelper helper) {
+		Husk thrower = mob(helper, THROWER);
+		Husk target = bare(mob(helper, TARGET));
+		int immunity = AlayaConfig.thrownWeapons().hitImmunityTicks();
+		throwAt(helper, thrower, new ItemStack(Items.IRON_SWORD), THROWN_FROM, THROWN_VELOCITY);
+		float health = target.getHealth();
+		check(helper, "the first throw strikes", true, health < target.getMaxHealth());
+		target.invulnerableTime = HitCooldown.FULL_TICKS - immunity + 1;
+		throwAt(helper, thrower, new ItemStack(Items.IRON_SWORD), THROWN_FROM, THROWN_VELOCITY);
+		check(helper, "a tick before the configured immunity ends it is refused", health, target.getHealth());
+		target.invulnerableTime = HitCooldown.FULL_TICKS - immunity;
+		throwAt(helper, thrower, new ItemStack(Items.IRON_SWORD), THROWN_FROM, THROWN_VELOCITY);
+		check(helper, "when it ends, it strikes again", true, target.getHealth() < health);
+		helper.succeed();
+	}
 
-		dasher.setPos(start);
-		DashMovement.advance(level, dasher, DASH, DASH_STEP, true);
-		check(helper, "the whole dash", DASH.length(), dasher.position().distanceTo(start));
-		check(helper, "the wall is carved", true, helper.getBlockState(low).isAir() && helper.getBlockState(high).isAir());
+	@GameTest
+	public void aThrownSpearDealsItsSpeedDamageOverTheDivisorNeverLessThanItsAttack(GameTestHelper helper) {
+		Husk thrower = mob(helper, THROWER);
+		Husk target = bare(mob(helper, TARGET));
+		ItemStack spear = new ItemStack(Items.IRON_SPEAR);
+		double closing = THROWN_VELOCITY.length() * SharedConstants.TICKS_PER_SECOND;
+		double speedDamage = WeaponStats.PLAYER_ATTACK_DAMAGE + Math.floor(closing * spear.get(DataComponents.KINETIC_WEAPON).damageMultiplier());
+		throwAt(helper, thrower, spear, THROWN_FROM, THROWN_VELOCITY);
+		check(helper, "its speed damage over the divisor, or its attack if that is more",
+			Math.max(WeaponStats.attackDamage(spear), speedDamage / AlayaConfig.thrownWeapons().spearDivisor()), target.getMaxHealth() - target.getHealth());
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aThrownMaceAddsItsDamageFromTheHeightItFalls(GameTestHelper helper) {
+		Husk thrower = mob(helper, THROWER);
+		Husk level = bare(mob(helper, TARGET));
+		Husk below = bare(mob(helper, TARGET.east(2)));
+		ItemStack mace = new ItemStack(Items.MACE);
+		throwAt(helper, thrower, mace, THROWN_FROM, THROWN_VELOCITY);
+		check(helper, "flying level it deals only its own attack", WeaponStats.attackDamage(mace), level.getMaxHealth() - level.getHealth());
+		throwAt(helper, thrower, mace, Vec3.atBottomCenterOf(TARGET.east(2)).add(0, MACE_FALL_HEIGHT, 0), MACE_DROP);
+		check(helper, "dropped from above it deals more", true, below.getMaxHealth() - below.getHealth() > WeaponStats.attackDamage(mace));
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aDashCarvesNothingBehindASolidShield(GameTestHelper helper) {
+		TestShields.shield(helper, TestShields.SOLID_DISC, RANK);
+		helper.setBlock(CARVED, Blocks.STONE);
+		helper.setBlock(SPARED, Blocks.STONE);
+		Husk body = mob(helper, DASH_FROM_SOUTH);
+		DashMovement.carve(helper.getLevel(), body, DASH_NORTH, DASH_STEP);
+		check(helper, "the block in front of the shield is carved", true, helper.getBlockState(CARVED).isAir());
+		check(helper, "the block behind it stays", true, helper.getBlockState(SPARED).is(Blocks.STONE));
 		helper.succeed();
 	}
 
 	@GameTest
 	public void aBodyCanCarveItsWayWithoutBeingMoved(GameTestHelper helper) {
+		check(helper, "weapons break blocks by default", true, helper.getLevel().getGameRules().get(AlayaGameRules.WEAPON_BLOCK_DAMAGE));
 		BlockPos wall = new BlockPos(DASHER.getX(), DASHER.getY(), WALL_Z);
 		helper.setBlock(wall, Blocks.STONE);
 		helper.setBlock(wall.above(), Blocks.STONE);
@@ -231,63 +293,5 @@ public class WeaponGameTests {
 		level.addFreshEntity(other);
 		check(helper, "the tagged weapon dropped is indestructible", true, tagged.isInvulnerable() && !other.isInvulnerable());
 		helper.succeed();
-	}
-
-	private static final class TestBeam implements ClashBeam {
-		private final Husk caster;
-		private final Vec3 origin;
-
-		private TestBeam(Husk caster, Vec3 origin) {
-			this.caster = caster;
-			this.origin = origin;
-		}
-
-		@Override
-		public Entity beamEntity() {
-			return this.caster;
-		}
-
-		@Override
-		public Vec3 beamOrigin() {
-			return this.origin;
-		}
-
-		@Override
-		public Vec3 beamDirection() {
-			return NORTH;
-		}
-
-		@Override
-		public double beamLength() {
-			return BEAM_LENGTH;
-		}
-
-		@Override
-		public double beamRadius() {
-			return BEAM_RADIUS;
-		}
-
-		@Override
-		public LivingEntity beamOwner() {
-			return this.caster;
-		}
-
-		@Override
-		public double beamDrainPerSecond() {
-			return 0;
-		}
-
-		@Override
-		public boolean beamLive() {
-			return true;
-		}
-
-		@Override
-		public void loseClash() {
-		}
-
-		@Override
-		public void beamEffects(ServerLevel level) {
-		}
 	}
 }

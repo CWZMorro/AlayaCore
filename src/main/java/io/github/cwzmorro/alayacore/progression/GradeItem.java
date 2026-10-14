@@ -20,6 +20,7 @@ import org.jspecify.annotations.Nullable;
  * true name for Gold, the title for Grand); used up outside creative. See {@link Kind} for promotion, Grand and demotion.
  */
 public final class GradeItem extends Item {
+	/** Promotion goes Black to Gold; Grand needs Gold and a free title; demotion goes one step down, Black stays. */
 	public enum Kind {
 		PROMOTION, GRAND, DEMOTION
 	}

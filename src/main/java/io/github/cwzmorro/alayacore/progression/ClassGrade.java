@@ -1,6 +1,6 @@
 package io.github.cwzmorro.alayacore.progression;
 
-import java.math.BigDecimal;
+import io.github.cwzmorro.alayacore.util.Numbers;
 import java.util.Locale;
 import net.minecraft.advancements.AdvancementType;
 import net.minecraft.network.chat.Component;
@@ -41,7 +41,7 @@ public enum ClassGrade {
 	}
 
 	public Component description(Component className, double syncPercent) {
-		return Component.translatable(this.descriptionKey(), className, BigDecimal.valueOf(syncPercent).stripTrailingZeros().toPlainString());
+		return Component.translatable(this.descriptionKey(), className, Numbers.plain(syncPercent));
 	}
 
 	public Component description(Component className) {

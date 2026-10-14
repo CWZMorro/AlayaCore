@@ -20,7 +20,7 @@ class ManaConfigTest {
 
 	@Test
 	void foodByNutritionPlusSweets() {
-		assertEquals(0.02, DEFAULTS.foodFraction(8, STEAK), EPS);
+		assertEquals(0.02, DEFAULTS.foodFraction(8, STEAK, 0.0), EPS);
 		assertEquals(0.035, DEFAULTS.foodFraction(2, COOKIE, 3.0), EPS); // 0.5% + 3%
 		assertEquals(0.055, DEFAULTS.foodFraction(2, CAKE, 5.0), EPS); // per slice: 0.5% + 5%
 	}

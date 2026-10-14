@@ -1,0 +1,4 @@
+{
+	"group": "alayacore-gametest:other_group",
+	"tables": ["alayacore-gametest:chests/other"]
+}

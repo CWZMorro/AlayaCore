@@ -12,7 +12,7 @@ final class OpacitySlider {
 
 	static SettingSlider create(int x, int y, int width) {
 		return new SettingSlider(x, y, width, 0.0, Percent.WHOLE, STEP_PERCENT, Math.round(Percent.fromFraction(ClientConfig.presetHudOpacity())),
-			percent -> Component.translatable("alayacore.screen.presets.opacity", Math.round(percent)),
+			percent -> Component.translatable("screen.alayacore.presets.opacity", Math.round(percent)),
 			percent -> ClientConfig.setPresetHudOpacity((float) Percent.toFraction(percent)));
 	}
 }

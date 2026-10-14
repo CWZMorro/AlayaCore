@@ -59,7 +59,8 @@ public final class RealityMarbles {
 		CLOSING
 	}
 
-	public record Overlap(Verdict verdict, List<RealityMarble> losers) { }
+	public record Overlap(Verdict verdict, List<RealityMarble> losers) {
+	}
 
 	public static void register(RealityMarbleSource source) {
 		SOURCES.add(source);

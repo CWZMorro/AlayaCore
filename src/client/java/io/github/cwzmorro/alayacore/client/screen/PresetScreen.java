@@ -27,6 +27,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -40,11 +41,11 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 public final class PresetScreen extends Screen {
-	private static final Component LABEL_ABILITIES = Component.translatable("alayacore.screen.presets.abilities");
-	private static final Component LABEL_QUICK_CAST = Component.translatable("alayacore.screen.presets.quick_cast");
-	private static final Component LABEL_SELECT_ABILITY = Component.translatable("alayacore.screen.presets.select_ability");
-	private static final Component LABEL_DESCRIPTION = Component.translatable("alayacore.screen.presets.description");
-	private static final Component LABEL_SETTINGS = Component.translatable("alayacore.screen.presets.settings");
+	private static final Component LABEL_ABILITIES = Component.translatable("screen.alayacore.presets.abilities");
+	private static final Component LABEL_QUICK_CAST = Component.translatable("screen.alayacore.presets.quick_cast");
+	private static final Component LABEL_SELECT_ABILITY = Component.translatable("screen.alayacore.presets.select_ability");
+	private static final Component LABEL_DESCRIPTION = Component.translatable("screen.alayacore.presets.description");
+	private static final Component LABEL_SETTINGS = Component.translatable("screen.alayacore.presets.settings");
 
 	private static final int WIDTH = 276;
 	private static final int PADDING = 8;
@@ -134,7 +135,7 @@ public final class PresetScreen extends Screen {
 	private int top;
 
 	public PresetScreen() {
-		super(Component.translatable("alayacore.screen.presets.title"));
+		super(Component.translatable("screen.alayacore.presets.title"));
 	}
 
 	@Override
@@ -187,7 +188,7 @@ public final class PresetScreen extends Screen {
 		if (this.settingsArea != null) {
 			ScreenRectangle area = this.settingsArea;
 			// Covered panel buttons must not draw or receive input through an overlapping settings tab.
-			for (var child : this.children()) {
+			for (GuiEventListener child : this.children()) {
 				if (child instanceof Button button && button.getX() + button.getWidth() > area.left()
 					&& button.getY() < area.bottom() && button.getY() + button.getHeight() > area.top()) {
 					button.visible = false;
@@ -198,7 +199,7 @@ public final class PresetScreen extends Screen {
 				this.addRenderableWidget(this.abilitySlider(area, row));
 			}
 		}
-		this.hint = this.font.split(Component.translatable("alayacore.screen.presets.hint"), WIDTH - PADDING - RIGHT_X);
+		this.hint = this.font.split(Component.translatable("screen.alayacore.presets.hint"), WIDTH - PADDING - RIGHT_X);
 		this.refreshDescription();
 		this.tick();
 	}
@@ -323,7 +324,7 @@ public final class PresetScreen extends Screen {
 		}
 		ManaData mana = AlayaMana.get(this.minecraft.player);
 		this.manaText = mana == null ? null
-			: Component.translatable("alayacore.screen.presets.mana", MANA_FORMAT.format(mana.current()), MANA_FORMAT.format(mana.max()));
+			: Component.translatable("screen.alayacore.presets.mana", MANA_FORMAT.format(mana.current()), MANA_FORMAT.format(mana.max()));
 	}
 
 	@Override

@@ -79,10 +79,6 @@ public record ManaConfig(
 		return killedMaxHealth * this.killMaxManaMultiplier;
 	}
 
-	public double foodFraction(int nutrition, Identifier food) {
-		return this.foodFraction(nutrition, food, 0.0);
-	}
-
 	public double foodFraction(int nutrition, Identifier food, double dataPercent) {
 		return Percent.toFraction(nutrition * this.foodPercentPerHungerPoint + this.sweetFoodPercent.getOrDefault(food, dataPercent));
 	}

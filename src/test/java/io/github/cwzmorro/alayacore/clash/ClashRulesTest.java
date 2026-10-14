@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.cwzmorro.alayacore.combat.AttackData;
 import io.github.cwzmorro.alayacore.rank.Rank;
+import io.github.cwzmorro.alayacore.rank.RankLetter;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -58,7 +59,7 @@ class ClashRulesTest {
 		assertEquals(157.5, clash.drainPerSecond(105, Rank.parse("A"), Rank.parse("EX")), EPS);
 		assertEquals(116.6, clash.drainPerSecond(116.6, Rank.parse("EX"), Rank.parse("A")), EPS);
 		double step = (clash.closeLowerDrainMultiplier() - 1.0) / (Rank.MAX_PLUSES + 1);
-		for (var letter : io.github.cwzmorro.alayacore.rank.RankLetter.values()) {
+		for (RankLetter letter : RankLetter.values()) {
 			Rank base = new Rank(letter, 0);
 			assertEquals(105 * (1 + step), clash.drainPerSecond(105, base, new Rank(letter, 1)), EPS);
 			assertEquals(105 * (1 + step * Rank.MAX_PLUSES),

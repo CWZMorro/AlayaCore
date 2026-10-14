@@ -9,7 +9,9 @@ import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAs;
 import io.github.cwzmorro.alayacore.combat.AttackData;
 import io.github.cwzmorro.alayacore.combat.AttackDefence;
 import io.github.cwzmorro.alayacore.combat.AttackSource;
+import io.github.cwzmorro.alayacore.combat.Attacks;
 import io.github.cwzmorro.alayacore.combat.ContinuousSource;
+import io.github.cwzmorro.alayacore.combat.HitCooldown;
 import io.github.cwzmorro.alayacore.combat.ServantBonus;
 import io.github.cwzmorro.alayacore.config.AlayaConfig;
 import io.github.cwzmorro.alayacore.mixin.LivingEntityAccessor;
@@ -20,7 +22,6 @@ import io.github.cwzmorro.alayacore.servant.ServantClasses;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -53,8 +54,6 @@ public class CombatGameTests {
 	private static final float HIT = 15.0F;
 	private static final float SLICE = 0.75F;
 	private static final int CONTINUOUS_TICKS = SharedConstants.TICKS_PER_SECOND;
-	// Vanilla's hit cooldown after a full hit.
-	private static final int FULL_COOLDOWN_TICKS = 20;
 	private static final float BARE_HEALTH = 100.0F;
 	private static final int PROTECTION_LEVEL = 4;
 	private static final EquipmentSlot[] ARMOR_SLOTS = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
@@ -63,16 +62,13 @@ public class CombatGameTests {
 	private static final Item[] PLAIN_ARMOR = {Items.IRON_BOOTS, Items.IRON_LEGGINGS, Items.IRON_CHESTPLATE, Items.IRON_HELMET};
 	private static final int WEAR_SECONDS = 3;
 
-	private static Holder<DamageType> type(ServerLevel level, ResourceKey<DamageType> key) {
-		return level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(key);
-	}
-
 	private static DamageSource attack(ServerLevel level, LivingEntity attacker, String rank, boolean noblePhantasm) {
-		return new AttackSource(type(level, PLAIN), attacker, attacker, new AttackData(attacker.getUUID(), Rank.parse(rank), false, noblePhantasm));
+		return new AttackSource(Attacks.damageType(level, PLAIN), attacker, attacker,
+			new AttackData(attacker.getUUID(), Rank.parse(rank), false, noblePhantasm));
 	}
 
 	private static DamageSource plain(ServerLevel level, LivingEntity attacker) {
-		return new DamageSource(type(level, PLAIN), attacker);
+		return new DamageSource(Attacks.damageType(level, PLAIN), attacker);
 	}
 
 	private static DamageSource continuous(ServerLevel level, LivingEntity attacker) {
@@ -149,12 +145,12 @@ public class CombatGameTests {
 	@GameTest
 	public void aDamageTypeInTheTagIgnoresDefenceAndWearsNoArmor(GameTestHelper helper) {
 		ServerPlayer human = join(helper);
-		DamageSource source = new DamageSource(type(helper.getLevel(), DEFIANT), human);
+		DamageSource source = new DamageSource(Attacks.damageType(helper.getLevel(), DEFIANT), human);
 		Zombie target = armored(helper);
 		float afterArmor = CombatRules.getDamageAfterAbsorb(target, HIT, source, target.getArmorValue(),
 			(float) target.getAttributeValue(Attributes.ARMOR_TOUGHNESS));
 		float reduced = (float) (HIT - (1 - AlayaConfig.combat().ignoresDefenceArmor()) * (HIT - afterArmor));
-		float protection = Math.min(20.0F, EnchantmentHelper.getDamageProtection(helper.getLevel(), target, source));
+		float protection = Math.min(AttackDefence.MOST_PROTECTION, EnchantmentHelper.getDamageProtection(helper.getLevel(), target, source));
 		double expected = CombatRules.getDamageAfterMagicAbsorb(reduced, (float) (protection * (1 - AlayaConfig.combat().ignoresDefenceProtection())));
 		float before = target.getHealth();
 		target.hurtServer(helper.getLevel(), source, HIT);
@@ -170,7 +166,7 @@ public class CombatGameTests {
 		check(helper, "a rank B noble phantasm wears armor", true, AttackDefence.wearsArmor(attack(level, human, "B", true)));
 		check(helper, "a rank A noble phantasm wears armor", true, AttackDefence.wearsArmor(attack(level, human, "A", true)));
 		check(helper, "a rank EX noble phantasm ignores all armor, so wears none", false, AttackDefence.wearsArmor(attack(level, human, "EX", true)));
-		check(helper, "a hit that ignores defence wears none", false, AttackDefence.wearsArmor(new DamageSource(type(level, DEFIANT), human)));
+		check(helper, "a hit that ignores defence wears none", false, AttackDefence.wearsArmor(new DamageSource(Attacks.damageType(level, DEFIANT), human)));
 		helper.succeed();
 	}
 
@@ -211,7 +207,7 @@ public class CombatGameTests {
 		check(helper, "an ordinary hit smaller than the last is stopped by the hit cooldown, so continuous damage is opt-in", health, target.getHealth());
 		target.hurtServer(level, continuous(level, attacker), SLICE);
 		check(helper, "a continuous tick lands through the hit cooldown", health - SLICE, target.getHealth());
-		check(helper, "the hit cooldown is left as it was", FULL_COOLDOWN_TICKS, target.invulnerableTime);
+		check(helper, "the hit cooldown is left as it was", HitCooldown.FULL_TICKS, target.invulnerableTime);
 		check(helper, "and what it took", HIT, ((LivingEntityAccessor) target).alayacore$lastHurt());
 
 		Zombie fresh = bare(helper);
@@ -250,7 +246,7 @@ public class CombatGameTests {
 		ServerPlayer struck = wearer(helper);
 		for (int second = 0; second < WEAR_SECONDS; second++) {
 			struck.invulnerableTime = 0;
-			struck.hurtServer(level, new DamageSource(type(level, PLAIN)), SLICE * SharedConstants.TICKS_PER_SECOND);
+			struck.hurtServer(level, new DamageSource(Attacks.damageType(level, PLAIN)), SLICE * SharedConstants.TICKS_PER_SECOND);
 		}
 		for (int tick = 0; tick < WEAR_SECONDS * CONTINUOUS_TICKS; tick++) {
 			helper.runAfterDelay(tick, () -> continuous.hurtServer(level, ContinuousSource.of(level, PLAIN, null, null), SLICE));
@@ -323,6 +319,28 @@ public class CombatGameTests {
 		health = second.getHealth();
 		second.hurtServer(helper.getLevel(), plain(helper.getLevel(), other), HIT);
 		check(helper, "another attacker's hit lands in full", health - HIT, second.getHealth());
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aMobServantWhoseMeleeIgnoresTheHitCooldownHitsAgainAtOnceWithoutStartingOne(GameTestHelper helper) {
+		Zombie relentless = helper.spawn(EntityType.ZOMBIE, BESIDE);
+		relentless.setAttached(ServantStorage.CHOICE, ServantChoice.servant(TestServants.RELENTLESS));
+		Zombie ordinary = helper.spawn(EntityType.ZOMBIE, BESIDE);
+		ordinary.setAttached(ServantStorage.CHOICE, ServantChoice.servant(TestServants.NEW));
+		Zombie first = bare(helper);
+		ordinary.doHurtTarget(helper.getLevel(), first);
+		float health = first.getHealth();
+		ordinary.doHurtTarget(helper.getLevel(), first);
+		check(helper, "an ordinary servant mob's second hit is stopped by the hit cooldown", health, first.getHealth());
+
+		Zombie second = bare(helper);
+		relentless.doHurtTarget(helper.getLevel(), second);
+		health = second.getHealth();
+		check(helper, "the first hit lands", true, health < second.getMaxHealth());
+		relentless.doHurtTarget(helper.getLevel(), second);
+		check(helper, "the second hit lands through the hit cooldown", true, second.getHealth() < health);
+		check(helper, "and starts none", 0, second.invulnerableTime);
 		helper.succeed();
 	}
 

@@ -2,6 +2,7 @@ package io.github.cwzmorro.alayacore.gametest;
 
 import io.github.cwzmorro.alayacore.combat.AttackData;
 import io.github.cwzmorro.alayacore.combat.AttackOrigin;
+import io.github.cwzmorro.alayacore.rank.Rank;
 import io.github.cwzmorro.alayacore.shield.ClientShieldEvents;
 import io.github.cwzmorro.alayacore.shield.ShieldEntity;
 import io.github.cwzmorro.alayacore.shield.ShieldShape;
@@ -9,8 +10,8 @@ import java.util.UUID;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -27,12 +28,21 @@ final class TestShields {
 	private static final double DISC_RADIUS = 2.5;
 	private static final double DOME_RADIUS = 3.0;
 	private static final float SIZE = 0.5F;
+	static final Vec3 SPOT = new Vec3(4.5, 2.0, 4.5);
 	static final EntityType<TestShield> DISC = register("disc", new ShieldShape.Disc(DISC_RADIUS), false);
 	static final EntityType<TestShield> SOLID_DISC = register("solid_disc", new ShieldShape.Disc(DISC_RADIUS), true);
 	static final EntityType<TestShield> DOME = register("dome", new ShieldShape.Dome(DOME_RADIUS), false);
 	static final EntityType<RemoteAttack> REMOTE_ATTACK = register("remote_attack", EntityType.Builder.of(RemoteAttack::new, MobCategory.MISC));
 
 	private TestShields() {
+	}
+
+	static <T extends ShieldEntity> T shield(GameTestHelper helper, EntityType<T> type, Rank rank) {
+		T shield = helper.spawn(type, SPOT);
+		shield.setYRot(0.0F);
+		shield.setXRot(0.0F);
+		shield.deploy(rank);
+		return shield;
 	}
 
 	static final class RemoteAttack extends Entity implements AttackOrigin {
@@ -108,7 +118,7 @@ final class TestShields {
 	}
 
 	private static <T extends Entity> EntityType<T> register(String name, EntityType.Builder<T> builder) {
-		ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("alayacore-gametest", name));
+		ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, TestServants.id(name));
 		return Registry.register(BuiltInRegistries.ENTITY_TYPE, key, builder.sized(SIZE, SIZE).build(key));
 	}
 

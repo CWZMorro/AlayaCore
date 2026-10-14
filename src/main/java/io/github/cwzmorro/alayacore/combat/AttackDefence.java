@@ -20,7 +20,7 @@ public final class AttackDefence {
 	/** Damage types whose hits ignore defence as {@link CombatConfig#ignoresDefenceArmor} and {@link CombatConfig#ignoresDefenceProtection} say; a content mod adds its own. */
 	public static final TagKey<DamageType> IGNORES_DEFENCE = TagKey.create(Registries.DAMAGE_TYPE, AlayaCore.id("ignores_defence"));
 	// Vanilla's limit on enchantment protection.
-	private static final float MOST_PROTECTION = 20.0F;
+	public static final float MOST_PROTECTION = 20.0F;
 
 	private AttackDefence() {
 	}

@@ -121,7 +121,7 @@ public final class ServantSelection {
 				}
 				Identifier servant = free.get(player.getRandom().nextInt(free.size()));
 				apply(player, Optional.of(servant));
-				player.sendSystemMessage(Component.translatable("alayacore.servant.random_result", Servant.name(servant)));
+				player.sendSystemMessage(Component.translatable("servant.alayacore.random_result", Servant.name(servant)));
 			}
 			case SERVANT -> {
 				if (forceRandom || payload.servant().filter(free::contains).isEmpty()) {
@@ -139,10 +139,11 @@ public final class ServantSelection {
 		Presets.clear(player);
 		AbilitySettings.clear(player);
 		TrueName.onLeftServant(player);
-		if (!AlayaServants.classId(player).equals(servant.flatMap(AlayaRegistries.SERVANT::getOptional).map(s -> s.servantClass().identifier()))) {
+		MinecraftServer server = player.level().getServer();
+		Optional<Identifier> newClass = servant.flatMap(id -> ServantDefinitions.get(server.registryAccess(), id)).map(s -> s.servantClass().identifier());
+		if (!AlayaServants.classId(player).equals(newClass)) {
 			Grand.loseTitle(player);
 		}
-		MinecraftServer server = player.level().getServer();
 		Map<UUID, Identifier> owners = new HashMap<>(owners(server));
 		servant.ifPresentOrElse(id -> owners.put(player.getUUID(), id), () -> owners.remove(player.getUUID()));
 		server.globalAttachments().setAttached(ServantStorage.OWNERS, Map.copyOf(owners));

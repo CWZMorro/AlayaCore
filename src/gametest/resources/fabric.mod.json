@@ -9,7 +9,7 @@
 			"io.github.cwzmorro.alayacore.gametest.TestServants"
 		],
 		"client": [
-			"io.github.cwzmorro.alayacore.gametest.TestShieldsClient"
+			"io.github.cwzmorro.alayacore.gametest.TestRenderersClient"
 		],
 		"server": [
 			"io.github.cwzmorro.alayacore.gametest.TestServants"
@@ -32,7 +32,8 @@
 			"io.github.cwzmorro.alayacore.gametest.CombatGameTests",
 			"io.github.cwzmorro.alayacore.gametest.LostToVoidGameTests",
 			"io.github.cwzmorro.alayacore.gametest.WeaponGameTests",
-			"io.github.cwzmorro.alayacore.gametest.StartingItemsGameTests"
+			"io.github.cwzmorro.alayacore.gametest.StartingItemsGameTests",
+			"io.github.cwzmorro.alayacore.gametest.LootTableGroupGameTests"
 		],
 		"fabric-client-gametest": [
 			"io.github.cwzmorro.alayacore.gametest.ServantScreenClientTest",

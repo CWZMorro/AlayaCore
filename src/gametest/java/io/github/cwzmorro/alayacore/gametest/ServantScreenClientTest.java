@@ -25,9 +25,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public class ServantScreenClientTest implements FabricClientGameTest {
-	private static final String CHOOSE = "alayacore.screen.servant_selection.choose";
-	private static final String NEXT = "alayacore.screen.servant_selection.next";
-	private static final String CONTENTS = "alayacore.screen.servant_selection.contents";
+	private static final String CHOOSE = "screen.alayacore.servant_selection.choose";
+	private static final String NEXT = "screen.alayacore.servant_selection.next";
+	private static final String CONTENTS = "screen.alayacore.servant_selection.contents";
 	private static final int[] GUI_SCALES = {2, 3};
 	private static final int PANEL_MIDDLE_ABOVE_CHOOSE = 80;
 	// Layout of the window, from the buttons under it: the gap to the window, and from the window's top to the first text line's top.

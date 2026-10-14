@@ -3,6 +3,7 @@ package io.github.cwzmorro.alayacore.gametest;
 import static io.github.cwzmorro.alayacore.gametest.TestPlayers.joinAsHuman;
 
 import io.github.cwzmorro.alayacore.api.AlayaMana;
+import io.github.cwzmorro.alayacore.combat.WeaponBlocks;
 import io.github.cwzmorro.alayacore.gametest.TestMarbles.TestMarble;
 import io.github.cwzmorro.alayacore.marble.RealityMarble;
 import io.github.cwzmorro.alayacore.marble.RealityMarbles;
@@ -19,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -58,7 +60,14 @@ public class RealityMarbleGameTests {
 		return player;
 	}
 
-	private static TestMarble open(GameTestHelper helper, ServerPlayer caster) {
+	private static Zombie mobCaster(GameTestHelper helper) {
+		Zombie mob = helper.spawn(EntityType.ZOMBIE, BlockPos.containing(CENTRE));
+		mob.setNoAi(true);
+		mob.setNoGravity(true);
+		return mob;
+	}
+
+	private static TestMarble open(GameTestHelper helper, LivingEntity caster) {
 		TestMarble marble = TestMarbles.open(helper.getLevel(), caster, helper.absoluteVec(CENTRE), RADIUS).marble();
 		check(helper, marble != null, "the marble opens where none stands");
 		return marble;
@@ -101,6 +110,22 @@ public class RealityMarbleGameTests {
 		check(helper, level.getBlockState(inside).isAir() && stone.getCount() == 2, "placing on its terrain places nothing and uses nothing up");
 		marble.close();
 		check(helper, !RealityMarbles.protects(level, inside), "a closed marble protects nothing");
+		helper.succeed();
+	}
+
+	@GameTest
+	public void weaponAbilitiesLeaveItsTerrain(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		TestMarble marble = open(helper, caster(helper, 0));
+		BlockPos inside = column(helper, HIGHEST_INSIDE);
+		BlockPos outside = column(helper, HIGHEST_INSIDE + 1);
+		level.setBlock(inside, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+		level.setBlock(outside, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+		WeaponBlocks.breakWithoutDrops(level, inside);
+		WeaponBlocks.breakWithoutDrops(level, outside);
+		check(helper, level.getBlockState(inside).is(Blocks.STONE), "a weapon ability can't break the marble's terrain");
+		check(helper, level.getBlockState(outside).isAir(), "a weapon ability breaks a block outside");
+		marble.close();
 		helper.succeed();
 	}
 
@@ -214,6 +239,26 @@ public class RealityMarbleGameTests {
 			check(helper, marble.closed, "a teleport out of the marble closes it at once");
 			helper.succeed();
 		});
+	}
+
+	@GameTest
+	public void aMobCasterTeleportingOutByItsOwnTeleportClosesIt(GameTestHelper helper) {
+		Zombie caster = mobCaster(helper);
+		TestMarble marble = open(helper, caster);
+		Vec3 centre = helper.absoluteVec(CENTRE);
+		caster.teleportTo(centre.x + 1, centre.y, centre.z);
+		check(helper, !marble.closed, "a teleport within the marble keeps it");
+		caster.teleportTo(centre.x + RADIUS + 3, centre.y, centre.z);
+		check(helper, marble.closed, "a mob's teleport out of the marble closes it at once");
+		helper.succeed();
+	}
+
+	@GameTest
+	public void aMobCastersRemovalClosesIt(GameTestHelper helper) {
+		Zombie caster = mobCaster(helper);
+		TestMarble marble = open(helper, caster);
+		caster.discard();
+		closesSoon(helper, marble, "the mob caster's removal");
 	}
 
 	@GameTest

@@ -21,9 +21,16 @@ import org.jspecify.annotations.Nullable;
 
 /** The rules every held beam shares: duration, drain, turn rate, clipping by clashes and shields, and the optional bow-like movement. */
 public final class HeldBeam {
-	// Absent outside the casts that opted in; the server supplies the configured input scale to clients.
+	// The input scale of a caster whose beam slows it: absent outside the casts that opted in; the server supplies the configured scale to clients.
 	private static final AttachmentType<Double> MOVEMENT = AttachmentRegistry.create(AlayaCore.id("held_beam_movement"),
 		builder -> builder.syncWith(ByteBufCodecs.DOUBLE, AttachmentSyncPredicate.all()));
+
+	private HeldBeam() {
+	}
+
+	/** Registers the movement attachment before Fabric negotiates syncable types at login. */
+	public static void init() {
+	}
 
 	/** Begins bow-style input slowdown, not an attribute debuff; jump velocity is untouched. */
 	public static void startMovement(LivingEntity entity) {
@@ -41,13 +48,6 @@ public final class HeldBeam {
 
 	public static float movementMultiplier(LivingEntity entity) {
 		return entity.getAttachedOrElse(MOVEMENT, 1.0).floatValue();
-	}
-
-	private HeldBeam() {
-	}
-
-	/** Registers the movement attachment before Fabric negotiates syncable types at login. */
-	public static void init() {
 	}
 
 	/**

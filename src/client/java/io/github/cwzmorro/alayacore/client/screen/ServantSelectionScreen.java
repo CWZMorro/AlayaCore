@@ -14,7 +14,7 @@ import io.github.cwzmorro.alayacore.servant.ServantDefinitions;
 import io.github.cwzmorro.alayacore.servant.ServantRules;
 import io.github.cwzmorro.alayacore.servant.ServantStats;
 import io.github.cwzmorro.alayacore.servant.ServantStorage;
-import java.math.BigDecimal;
+import io.github.cwzmorro.alayacore.util.Numbers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +53,7 @@ public final class ServantSelectionScreen extends Screen {
 	private static final Identifier ARROW_RIGHT_HIGHLIGHTED = AlayaCore.id("servant_select/arrow_right_highlighted");
 	private static final Identifier UNKNOWN_ICON = ServantClass.icon(AlayaCore.id("unknown"));
 	private static final Identifier ALL_ICON = ServantClass.icon(AlayaCore.id("all"));
-	private static final String KEY_PREFIX = "alayacore.screen.servant_selection.";
+	private static final String KEY_PREFIX = "screen.alayacore.servant_selection.";
 
 	private static final int WINDOW_WIDTH = 176;
 	public static final int WINDOW_PADDING = 6;
@@ -276,8 +276,8 @@ public final class ServantSelectionScreen extends Screen {
 	}
 
 	private Component statValue(Stat stat, ServantStats real) {
-		String demi = number(stat.value().applyAsDouble(this.options.demi()));
-		String end = number(stat.value().applyAsDouble(real));
+		String demi = Numbers.plain(stat.value().applyAsDouble(this.options.demi()));
+		String end = Numbers.plain(stat.value().applyAsDouble(real));
 		String range = demi.equals(end) ? end : demi + Rank.RANGE_DASH + end;
 		Component value = formattedStat(stat, range);
 		return this.font.width(statLabel(stat)) + VALUE_GAP + this.font.width(value) <= textWidth() ? value : formattedStat(stat, end);
@@ -289,10 +289,6 @@ public final class ServantSelectionScreen extends Screen {
 
 	private static Component formattedStat(Stat stat, String value) {
 		return stat.format() == null ? Component.literal(value) : Component.translatable(KEY_PREFIX + stat.format(), value);
-	}
-
-	private static String number(double value) {
-		return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
 	}
 
 	private void sizeWindow(List<Entry> sized) {

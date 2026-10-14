@@ -69,6 +69,7 @@ public final class AlayaMana {
 		}
 	}
 
+	/** Adds (or with a negative amount removes) current mana, kept between 0 and max; creative is not exempt, see {@link #spend}. */
 	public static void addCurrent(LivingEntity entity, double amount) {
 		update(entity, mana -> ManaRules.addCurrent(mana, amount));
 	}

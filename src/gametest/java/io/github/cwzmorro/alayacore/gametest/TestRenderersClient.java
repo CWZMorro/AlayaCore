@@ -4,7 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 
-public final class TestShieldsClient implements ClientModInitializer {
+public final class TestRenderersClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EntityRenderers.register(TestShields.DISC, NoopRenderer::new);

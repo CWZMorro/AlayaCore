@@ -5,7 +5,7 @@ import net.minecraft.SharedConstants;
 
 /** Evaluates casting eligibility and tap/hold timing without world state. */
 public final class AbilityRules {
-	/** Why a press was refused; each has an action-bar message {@code alayacore.ability.refused.<name>}. */
+	/** Why a press was refused; each has an action-bar message {@code ability.alayacore.refused.<name>}. */
 	public enum Refusal {
 		NEEDS_TRUE_NAME,
 		BLOCKED,
@@ -13,7 +13,7 @@ public final class AbilityRules {
 		NOT_ENOUGH_MANA;
 
 		public String translationKey() {
-			return "alayacore.ability.refused." + this.name().toLowerCase(Locale.ROOT);
+			return "ability.alayacore.refused." + this.name().toLowerCase(Locale.ROOT);
 		}
 	}
 
